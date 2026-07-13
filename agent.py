@@ -128,7 +128,16 @@ def main():
 
     # langgraph 带记忆的 Agent
     memory = MemorySaver()
-    agent = create_agent(model=llm, tools=tools, checkpointer=memory)
+    system_prompt = (
+        "你是一个AI复习资料提供助手，请用简洁明了的语句为用户解答疑惑，不需要丰富的感情，"
+        "如果不清楚答案请直接回答不知道。"
+    )
+    agent = create_agent(
+        model=llm,
+        tools=tools,
+        checkpointer=memory,
+        system_prompt=system_prompt,
+    )
     thread_id = "agent-session-1"
 
     print("\n" + "=" * 50)

@@ -7,3 +7,5 @@ pymupdf
 python-docx
 easyocr
 pillow
+fastapi
+uvicorn
