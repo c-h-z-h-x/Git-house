@@ -1,32 +1,35 @@
-"""模型配置：切换模型只需改这里的 MODEL 变量"""
+"""模型配置：支持 OpenAI / 通义千问 / DeepSeek + RAG 引擎"""
+
 import os
 from dotenv import load_dotenv
-from langchain_openai import ChatOpenAI
 
 load_dotenv()
 
-# ── 在这里切换模型 ──────────────────────
-# 可选: "openai" / "qwen" / "deepseek"
-MODEL = "qwen"
-# ───────────────────────────────────────
 
-def get_llm():
-    if MODEL == "openai":
-        return ChatOpenAI(
-            model="gpt-4o-mini",
-            api_key=os.getenv("OPENAI_API_KEY"),
-        )
-    elif MODEL == "qwen":
-        return ChatOpenAI(
-            model="qwen-plus",
-            api_key=os.getenv("DASHSCOPE_API_KEY"),
-            base_url="https://dashscope.aliyuncs.com/compatible-mode/v1",
-        )
-    elif MODEL == "deepseek":
-        return ChatOpenAI(
-            model="deepseek-chat",
-            api_key=os.getenv("DEEPSEEK_API_KEY"),
-            base_url="https://api.deepseek.com/v1",
-        )
-    else:
-        raise ValueError(f"不支持的模型: {MODEL}")
+# ── 模型配置（供 agent.py 使用）────────────
+LLM_CONFIG = {
+    "openai": {
+        "model": "gpt-4o-mini",
+        "api_key": os.getenv("OPENAI_API_KEY"),
+    },
+    "qwen": {
+        "model": "qwen-plus",
+        "api_key": os.getenv("DASHSCOPE_API_KEY"),
+        "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    },
+    "deepseek": {
+        "model": "deepseek-chat",
+        "api_key": os.getenv("DEEPSEEK_API_KEY"),
+        "base_url": "https://api.deepseek.com/v1",
+    },
+    "dashscope": {  # RAG 引擎专用（使用 embedding 模型）
+        "model": "qwen-plus",
+        "api_key": os.getenv("DASHSCOPE_API_KEY"),
+        "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+    },
+}
+
+# ── 兼容旧的 baidu 配置名 ─────────────────
+BAILIAN_API_KEY = os.getenv("DASHSCOPE_API_KEY")
+BAILIAN_BASE_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1"
+BAILIAN_MODEL = "qwen-plus"
