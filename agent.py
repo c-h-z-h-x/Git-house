@@ -10,7 +10,7 @@ from langchain_openai import ChatOpenAI
 from langchain.tools import tool
 from langchain_community.tools import DuckDuckGoSearchRun
 from langgraph.checkpoint.memory import MemorySaver
-from langgraph.prebuilt import create_react_agent
+from langchain.agents import create_agent
 from langchain_core.messages import HumanMessage, AIMessage
 from config import LLM_CONFIG
 
@@ -98,7 +98,7 @@ def main():
 
     # 用 langgraph 创建带记忆的 Agent
     memory = MemorySaver()
-    agent = create_react_agent(llm, tools, checkpointer=memory)
+    agent = create_agent(model=llm, tools=tools, checkpointer=memory)
     thread_id = "agent-session-1"
 
     print("\n" + "=" * 50)
