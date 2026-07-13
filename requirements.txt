@@ -5,3 +5,5 @@ openai>=1.0
 numpy
 pymupdf
 python-docx
+easyocr
+pillow

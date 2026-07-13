@@ -29,14 +29,38 @@ def _load_text_file(path: Path) -> str:
 
 
 def _load_pdf(path: Path) -> str:
-    """提取 PDF 全文"""
+    """提取 PDF 全文，文字不足时自动用 OCR 识别图片中的文字"""
     import fitz
     doc = fitz.open(str(path))
+
+    # 先尝试提取文本层
     texts = []
     for page in doc:
         texts.append(page.get_text())
+    text = "\n".join(texts).strip()
+
+    # 如果文字太少（< 50 字符），判定为扫描件/图片PDF，走 OCR
+    if len(text) < 50:
+        import os
+        os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
+        import easyocr
+        reader = easyocr.Reader(["ch_sim", "en"], gpu=False)
+        ocr_texts = []
+        for page in doc:
+            pix = page.get_pixmap(dpi=200)
+            img_bytes = pix.tobytes("png")
+            import numpy as np
+            from PIL import Image
+            import io
+            img = Image.open(io.BytesIO(img_bytes))
+            result = reader.readtext(np.array(img))
+            if result:
+                lines = sorted(result, key=lambda x: (x[0][0][1], x[0][0][0]))
+                ocr_texts.append(" ".join(item[1] for item in lines))
+        text = "\n".join(ocr_texts)
+
     doc.close()
-    return "\n".join(texts)
+    return text
 
 
 def _load_docx(path: Path) -> str:
