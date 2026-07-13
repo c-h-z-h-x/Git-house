@@ -13,12 +13,15 @@ from config import LLM_CONFIG
 
 # ── 文档加载（支持 .py .md .txt .pdf .docx）────
 
-IGNORE_DIRS = {".git", "__pycache__", "venv", ".venv", "node_modules"}
+IGNORE_DIRS = {".git", "__pycache__", "venv", ".venv", "node_modules", ".mypy_cache"}
 
+# 只索引文档类文件，跳过代码文件
 TEXT_EXTS = {
-    ".py", ".md", ".txt", ".yaml", ".yml", ".json",
+    ".md", ".txt", ".yaml", ".yml", ".json",
     ".toml", ".cfg", ".ini", ".env.example", ".gitignore",
 }
+
+SKIP_EXTS = {".py", ".pyc", ".pyo"}
 
 
 def _load_text_file(path: Path) -> str:
@@ -62,7 +65,7 @@ def load_document(path: Path) -> str | None:
 
 
 def load_codebase(root_dir: str) -> List[dict]:
-    """加载仓库中所有支持的文件"""
+    """加载仓库中所有支持的文件（跳过 .py 等代码文件）"""
     docs = []
     root = Path(root_dir).resolve()
     for f in root.rglob("*"):
@@ -70,6 +73,9 @@ def load_codebase(root_dir: str) -> List[dict]:
         if any(part.startswith(".") for part in f.relative_to(root).parts):
             continue
         if f.is_file():
+            # 跳过代码文件
+            if f.suffix.lower() in SKIP_EXTS:
+                continue
             content = load_document(f)
             if content and content.strip():
                 docs.append({"path": str(f.relative_to(root)), "content": content})
