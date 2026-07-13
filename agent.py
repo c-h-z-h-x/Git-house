@@ -39,6 +39,48 @@ def search_docs(query: str) -> str:
 
 
 @tool
+def pack_docs(query: str) -> str:
+    """
+    搜索匹配的文档并打包为 ZIP 压缩包，返回压缩包路径。
+    用法示例："把微积分的资料打包下载"、"打包人工智能的文档"
+    """
+    try:
+        from rag_engine import RAGEngine
+        repo_dir = os.path.dirname(os.path.abspath(__file__))
+        engine = RAGEngine(repo_dir)
+        results = engine.retrieve(query, top_k=20, mode="hybrid")
+
+        if not results:
+            return "没有找到匹配的文档。"
+
+        import zipfile
+        import tempfile
+        from pathlib import Path
+
+        # 去重得到唯一文件路径
+        seen = set()
+        files = []
+        for r in results:
+            if r["path"] not in seen:
+                seen.add(r["path"])
+                files.append(r["path"])
+
+        # 创建 zip
+        safe_name = "".join(c if c.isalnum() or c in "-_ " else "_" for c in query)[:20].strip()
+        zip_path = os.path.join(os.path.expanduser("~"), f"{safe_name or 'docs'}.zip")
+
+        with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
+            for f in files:
+                full = os.path.join(repo_dir, f)
+                if os.path.exists(full):
+                    zf.write(full, f)
+
+        return f"打包完成！共 {len(files)} 个文件\n保存位置: {zip_path}"
+    except Exception as e:
+        return f"打包失败: {e}"
+
+
+@tool
 def calculator(expression: str) -> str:
     """计算数学表达式，如 '2 + 3 * 4'"""
     try:
@@ -82,7 +124,7 @@ def main():
         base_url=cfg.get("base_url"),
     )
 
-    tools = [search_docs, calculator, current_time]
+    tools = [search_docs, pack_docs, calculator, current_time]
 
     # langgraph 带记忆的 Agent
     memory = MemorySaver()
