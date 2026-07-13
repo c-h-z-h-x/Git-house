@@ -5,6 +5,7 @@ FastAPI 后端：将 Agent 接入 Web 页面
 import os
 import sys
 import json
+import threading
 import uvicorn
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.staticfiles import StaticFiles
@@ -20,7 +21,7 @@ from langgraph.checkpoint.memory import MemorySaver
 from langchain.agents import create_agent
 from langchain_core.messages import HumanMessage, AIMessage
 
-# ── Agent 初始化 ─────────────────────────
+# ── 工具定义 ─────────────────────────────
 
 @tool
 def search_docs(query: str) -> str:
@@ -70,49 +71,64 @@ def pack_docs(query: str) -> str:
 
 @tool
 def current_time() -> str:
+    """获取当前时间"""
     from datetime import datetime
     return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-# 加载 Agent
-print("--- 初始化 Agent ---")
-repo_dir = os.path.dirname(os.path.abspath(__file__))
-try:
-    from rag_engine import RAGEngine
-    engine = RAGEngine(repo_dir)
-    n = engine.index()
-    print(f"[OK] 已索引 {n} 个文档片段")
-except Exception as e:
-    print(f"[WARN] 索引失败: {e}")
+# ── 全局 Agent（懒加载）───────────────────
 
-cfg = LLM_CONFIG.get("qwen", LLM_CONFIG["dashscope"])
-llm = ChatOpenAI(
-    model=cfg["model"],
-    api_key=cfg.get("api_key"),
-        base_url=cfg.get("base_url"),
-)
+agent = None
+agent_lock = threading.Lock()
 
-tools = [search_docs, pack_docs, current_time]
-system_prompt = (
-    "你是一个AI复习资料提供助手，请用简洁明了的语句为用户解答疑惑，不需要丰富的感情，"
-    "如果不清楚答案请直接回答不知道。"
-)
-memory = MemorySaver()
-agent = create_agent(
-    model=llm,
-    tools=tools,
-    checkpointer=memory,
-    system_prompt=system_prompt,
-)
-print("[OK] Agent 已就绪")
-print(f"    模型: {cfg['model']}")
-print(f"    工具: {[t.name for t in tools]}")
-print()
+def get_agent():
+    global agent
+    if agent is not None:
+        return agent
+    with agent_lock:
+        if agent is not None:
+            return agent
+        cfg = LLM_CONFIG.get("qwen", LLM_CONFIG["dashscope"])
+        llm = ChatOpenAI(
+            model=cfg["model"],
+            api_key=cfg.get("api_key"),
+            base_url=cfg.get("base_url"),
+        )
+        tools = [search_docs, pack_docs, current_time]
+        system_prompt = (
+            "你是一个AI复习资料提供助手，请用简洁明了的语句为用户解答疑惑，"
+            "不需要丰富的感情，如果不清楚答案请直接回答不知道。"
+        )
+        memory = MemorySaver()
+        agent = create_agent(
+            model=llm,
+            tools=tools,
+            checkpointer=memory,
+            system_prompt=system_prompt,
+        )
+        return agent
+
+# ── 后台索引 ──────────────────────────────
+
+index_ready = threading.Event()
+
+def _index_worker():
+    print("[后台] 开始索引文档库...", flush=True)
+    try:
+        from rag_engine import RAGEngine
+        engine = RAGEngine(os.path.dirname(os.path.abspath(__file__)))
+        n = engine.index()
+        print(f"[后台] 索引完成: {n} 个片段", flush=True)
+    except Exception as e:
+        print(f"[后台] 索引失败: {e}", flush=True)
+    finally:
+        index_ready.set()
+
+threading.Thread(target=_index_worker, daemon=True).start()
 
 # ── FastAPI 应用 ─────────────────────────
 
 app = FastAPI(title="复习资料助手")
 
-# 挂载静态文件
 static_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
 os.makedirs(static_dir, exist_ok=True)
 app.mount("/static", StaticFiles(directory=static_dir), name="static")
@@ -121,11 +137,21 @@ app.mount("/static", StaticFiles(directory=static_dir), name="static")
 async def root():
     return FileResponse(os.path.join(static_dir, "index.html"))
 
+@app.get("/status")
+async def status():
+    return {"index_ready": index_ready.is_set()}
+
 @app.websocket("/ws")
 async def websocket_endpoint(ws: WebSocket):
     await ws.accept()
+    if not index_ready.is_set():
+        await ws.send_text(json.dumps({"reply": "知识库索引中，请稍候再试..."}, ensure_ascii=False))
+        return
+
+    ag = get_agent()
     thread_id = "web-session-1"
     config = {"configurable": {"thread_id": thread_id}}
+
     while True:
         try:
             data = await ws.receive_text()
@@ -134,7 +160,7 @@ async def websocket_endpoint(ws: WebSocket):
             if not query:
                 continue
             response = ""
-            for chunk in agent.stream(
+            for chunk in ag.stream(
                 {"messages": [HumanMessage(content=query)]},
                 config,
                 stream_mode="values",
@@ -149,4 +175,4 @@ async def websocket_endpoint(ws: WebSocket):
             await ws.send_text(json.dumps({"reply": f"错误: {e}"}, ensure_ascii=False))
 
 if __name__ == "__main__":
-    uvicorn.run(app, host="127.0.0.1", port=8000)
+    uvicorn.run(app, host="127.0.0.1", port=8000, log_level="info")

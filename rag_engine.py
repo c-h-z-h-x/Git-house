@@ -28,19 +28,18 @@ def _load_text_file(path: Path) -> str:
     return path.read_text(encoding="utf-8")
 
 
-def _load_pdf(path: Path) -> str:
-    """提取 PDF 全文，文字不足时自动用 OCR 识别图片中的文字"""
+def _load_pdf(path: Path, use_ocr: bool = True) -> str:
+    """提取 PDF 全文。use_ocr=True 时，文字不足自动用 OCR"""
     import fitz
     doc = fitz.open(str(path))
 
-    # 先尝试提取文本层
     texts = []
     for page in doc:
         texts.append(page.get_text())
     text = "\n".join(texts).strip()
 
-    # 如果文字太少（< 50 字符），判定为扫描件/图片PDF，走 OCR
-    if len(text) < 50:
+    # 文字太少且启用 OCR 时才走 OCR
+    if use_ocr and len(text) < 50:
         import os
         os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
         import easyocr
@@ -70,12 +69,12 @@ def _load_docx(path: Path) -> str:
     return "\n".join(p.text for p in doc.paragraphs)
 
 
-def load_document(path: Path) -> str | None:
-    """根据扩展名自动选择解析器"""
+def load_document(path: Path, use_ocr: bool = True) -> str | None:
+    """根据扩展名自动选择解析器。use_ocr=False 跳过 OCR"""
     ext = path.suffix.lower()
     try:
         if ext == ".pdf":
-            return _load_pdf(path)
+            return _load_pdf(path, use_ocr=use_ocr)
         elif ext in (".docx", ".doc"):
             return _load_docx(path)
         elif ext in TEXT_EXTS:
@@ -98,7 +97,7 @@ def load_codebase(root_dir: str) -> List[dict]:
             # 跳过代码文件
             if f.suffix.lower() in SKIP_EXTS:
                 continue
-            content = load_document(f)
+            content = load_document(f, use_ocr=False)
             if content and content.strip():
                 docs.append({"path": str(f.relative_to(root)), "content": content})
     return docs
