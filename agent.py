@@ -17,16 +17,25 @@ from config import LLM_CONFIG
 # -- 工具定义 -------------------------------
 
 @tool
-def query_codebase(question: str) -> str:
-    """检索本地知识库（PDF/Word 文档），回答文档内容相关的问题。"""
+def search_docs(query: str) -> str:
+    """
+    搜索知识库中与关键词匹配的文档，返回匹配的文件名和路径。
+    用法示例："搜一下微积分的资料"、"查人工智能导引"
+    """
     try:
         from rag_engine import RAGEngine
         repo_dir = os.path.dirname(os.path.abspath(__file__))
         engine = RAGEngine(repo_dir)
-        result = engine.query(question)
-        return f"【回答】\n{result['answer']}\n\n【来源文件】\n" + "\n".join(f"- {s}" for s in result["sources"])
+        results = engine.retrieve(query, top_k=10, mode="hybrid")
+        if not results:
+            return "没有找到匹配的文档。"
+        lines = [f"找到 {len(results)} 个匹配结果：", ""]
+        for i, r in enumerate(results, 1):
+            lines.append(f"{i}. {r['path']}")
+            lines.append(f"   匹配度: {r['score']:.3f}  |  方式: {r.get('method', 'hybrid')}")
+        return "\n".join(lines)
     except Exception as e:
-        return f"查询知识库失败: {e}"
+        return f"搜索失败: {e}"
 
 
 @tool
@@ -73,7 +82,7 @@ def main():
         base_url=cfg.get("base_url"),
     )
 
-    tools = [query_codebase, calculator, current_time]
+    tools = [search_docs, calculator, current_time]
 
     # langgraph 带记忆的 Agent
     memory = MemorySaver()
