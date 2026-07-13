@@ -1,7 +1,7 @@
 langchain>=0.3
 langchain-openai
-langchain-community
 python-dotenv
-duckduckgo-search
 openai>=1.0
 numpy
+pymupdf
+python-docx

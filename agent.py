@@ -1,14 +1,13 @@
 """
-🤖 对话式 Agent + RAG 代码知识库
-- 用 langgraph 管理对话记忆
-- 可从自己的代码仓库中检索信息回答问题
+对话式 Agent + RAG 知识库
+- langgraph 对话记忆
+- 从本地仓库检索 PDF/Word 文档内容
 """
 
 import os
 
 from langchain_openai import ChatOpenAI
 from langchain.tools import tool
-from langchain_community.tools import DuckDuckGoSearchRun
 from langgraph.checkpoint.memory import MemorySaver
 from langchain.agents import create_agent
 from langchain_core.messages import HumanMessage, AIMessage
@@ -16,6 +15,19 @@ from config import LLM_CONFIG
 
 
 # ── 工具定义 ─────────────────────────────
+
+@tool
+def query_codebase(question: str) -> str:
+    """检索本地知识库（PDF/Word 文档），回答文档内容相关的问题。"""
+    try:
+        from rag_engine import RAGEngine
+        repo_dir = os.path.dirname(os.path.abspath(__file__))
+        engine = RAGEngine(repo_dir)
+        result = engine.query(question)
+        return f"【回答】\n{result['answer']}\n\n【来源文件】\n" + "\n".join(f"- {s}" for s in result["sources"])
+    except Exception as e:
+        return f"查询知识库失败: {e}"
+
 
 @tool
 def calculator(expression: str) -> str:
@@ -33,39 +45,19 @@ def current_time() -> str:
     return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 
-@tool
-def query_codebase(question: str) -> str:
-    """检索当前项目的代码仓库，回答关于项目代码的问题。
-    
-    用法示例：
-    - "这个项目的结构是什么？"
-    - "agent.py 里有哪些工具？"
-    - "config.py 支持哪些模型？"
-    """
-    try:
-        from rag_engine import RAGEngine
-        repo_dir = os.path.dirname(os.path.abspath(__file__))
-        engine = RAGEngine(repo_dir)
-        result = engine.query(question)
-        return f"【回答】\n{result['answer']}\n\n【来源文件】\n" + "\n".join(f"- {s}" for s in result["sources"])
-    except Exception as e:
-        return f"查询代码库失败: {e}"
-
-
 # ── 主程序 ───────────────────────────────
 
 def main():
-    print("--- 初始化中（索引代码库...） ---")
+    print("--- 初始化中（索引知识库...） ---")
 
-    # 初始化 RAG 引擎
     try:
         from rag_engine import RAGEngine
         repo_dir = os.path.dirname(os.path.abspath(__file__))
         engine = RAGEngine(repo_dir)
         n_chunks = engine.index()
-        print(f"[OK] 已索引 {n_chunks} 个代码片段\n")
+        print(f"[OK] 已索引 {n_chunks} 个文档片段\n")
     except Exception as e:
-        print(f"[WARN] RAG 索引失败: {e}（可继续对话，但代码检索不可用）\n")
+        print(f"[WARN] 知识库索引失败: {e}（可继续对话，但文档检索不可用）\n")
 
     # 选择模型
     print("可用模型: openai / qwen / deepseek")
@@ -77,26 +69,13 @@ def main():
 
     llm = ChatOpenAI(
         model=cfg["model"],
-        api_key=cfg["api_key"],
+        api_key=***
         base_url=cfg.get("base_url"),
     )
 
-    # 工具集
-    tools = [
-        query_codebase,      # RAG 代码检索
-        calculator,
-        current_time,
-    ]
+    tools = [query_codebase, calculator, current_time]
 
-    # 联网搜索（可选）
-    try:
-        search = DuckDuckGoSearchRun()
-        tools.append(search)
-        print("[OK] 联网搜索已启用")
-    except Exception:
-        pass
-
-    # 用 langgraph 创建带记忆的 Agent
+    # langgraph 带记忆的 Agent
     memory = MemorySaver()
     agent = create_agent(model=llm, tools=tools, checkpointer=memory)
     thread_id = "agent-session-1"
@@ -104,8 +83,8 @@ def main():
     print("\n" + "=" * 50)
     print(f"Agent 已启动（模型: {model_choice}）")
     print("  你可以：")
-    print("  - 问代码项目的问题 -> Agent 会检索仓库内容")
-    print("  - 闲聊 -> Agent 会记住上下文")
+    print("  - 问知识库文档的内容 -> Agent 自动检索")
+    print("  - 闲聊 -> Agent 记住上下文")
     print("  - 输入 exit / quit 退出")
     print("=" * 50 + "\n")
 
@@ -117,7 +96,6 @@ def main():
         if not query:
             continue
 
-        # langgraph 自动维护对话历史
         response = ""
         config = {"configurable": {"thread_id": thread_id}}
         for chunk in agent.stream(
