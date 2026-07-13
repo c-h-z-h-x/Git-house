@@ -15,13 +15,13 @@ from config import LLM_CONFIG
 
 IGNORE_DIRS = {".git", "__pycache__", "venv", ".venv", "node_modules", ".mypy_cache"}
 
-# 只索引文档类文件，跳过代码文件
+# 只索引 PDF 和 Word 文档，跳过其他文件
 TEXT_EXTS = {
-    ".md", ".txt", ".yaml", ".yml", ".json",
-    ".toml", ".cfg", ".ini", ".env.example", ".gitignore",
+    ".pdf", ".doc", ".docx",
 }
 
-SKIP_EXTS = {".py", ".pyc", ".pyo"}
+SKIP_EXTS = {".py", ".pyc", ".pyo", ".md", ".txt", ".yaml", ".yml", ".json",
+              ".toml", ".cfg", ".ini", ".env.example", ".gitignore"}
 
 
 def _load_text_file(path: Path) -> str:
@@ -50,14 +50,12 @@ def load_document(path: Path) -> str | None:
     """根据扩展名自动选择解析器"""
     ext = path.suffix.lower()
     try:
-        if ext in TEXT_EXTS:
-            return _load_text_file(path)
-        elif ext == ".pdf":
+        if ext == ".pdf":
             return _load_pdf(path)
-        elif ext == ".docx":
+        elif ext in (".docx", ".doc"):
             return _load_docx(path)
-        elif ext == ".doc":
-            return _load_docx(path)  # .doc 也尝试用 python-docx
+        elif ext in TEXT_EXTS:
+            return _load_text_file(path)
         return None
     except Exception as e:
         print(f"  [WARN] 无法解析 {path.name}: {e}")
