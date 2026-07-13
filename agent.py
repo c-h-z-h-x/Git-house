@@ -14,7 +14,7 @@ from langchain_core.messages import HumanMessage, AIMessage
 from config import LLM_CONFIG
 
 
-# ── 工具定义 ─────────────────────────────
+# -- 工具定义 -------------------------------
 
 @tool
 def query_codebase(question: str) -> str:
@@ -45,7 +45,7 @@ def current_time() -> str:
     return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 
-# ── 主程序 ───────────────────────────────
+# -- 主程序 ---------------------------------
 
 def main():
     print("--- 初始化中（索引知识库...） ---")
@@ -69,7 +69,7 @@ def main():
 
     llm = ChatOpenAI(
         model=cfg["model"],
-        api_key=***
+        api_key=cfg.get("api_key"),
         base_url=cfg.get("base_url"),
     )
 
