@@ -14,3 +14,5 @@ server_*.log
 
 # Downloads
 downloads/
+
+# RAG cache.rag_cache.pkl*
