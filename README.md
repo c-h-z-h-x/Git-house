@@ -2,81 +2,140 @@
 
 收集了一些适合穹宝体质的课程复习资料与题库，希望对大家有所帮助(´｡• ᵕ •｡`)
 
-部分复习资料来源：
+如想参与建设或有更好的想法或建议，欢迎 email 与我们联系：2920095282@qq.com
 
-* [mathsdream/THU-math-source](https://github.com/mathsdream/THU-math-source)
-
-如想参与建设或有更好的想法或建议，欢迎email与我们联系：2920095282@qq.com
+部分复习资料来源于 [mathsdream/THU-math-source](https://github.com/mathsdream/THU-math-source)
 
 ---
 
-## ⚠️ 重要：如何正确打开
+## 从零开始使用（写给第一次接触的人）
 
-**这是一个 Web 应用（不是普通网页），需要启动后端服务才能使用。不能直接双击 index.html！**
+这是一个 **Web 应用**，不是普通的静态网页。**不能直接双击 index.html 打开**。你需要先启动一个后端服务，然后通过浏览器访问。
 
-## 🚀 一键启动（Windows）
+下面是完整步骤——
 
-**第1步：** 下载或 clone 本仓库到你的电脑
+### 你需要准备什么
 
-**第2步：** 进入仓库文件夹，**双击 `start.bat`**
+| 项目 | 说明 | 获取方式 |
+|------|------|----------|
+| 一台电脑 | Windows / macOS / Linux 均可 | 你正在用的这台 |
+| Python | 版本 3.9 或更高 | [python.org](https://www.python.org/downloads/) |
+| API Key | 让 AI 工作的钥匙，免费申请 | 见下方说明 |
 
-> 它会自动帮你完成：
-> 1. 检测 Python 是否安装
-> 2. 自动安装所需的依赖包
-> 3. 启动 Web 服务
-> 4. 弹出浏览器窗口
-
-**第3步：** 浏览器自动打开 `http://127.0.0.1:8000`，开始使用
-
-### 手动启动（备选）
+### 第 1 步：获取代码
 
 ```bash
-# 安装依赖（仅首次需要）
+git clone https://github.com/c-h-z-h-x/Git-house.git
+cd Git-house
+```
+
+> 不会用 git？也可以直接到仓库页面点绿色的 **Code → Download ZIP**，解压到电脑上。
+
+### 第 2 步：配置 API Key（必须）
+
+这个应用需要调用 AI 接口，你需要申请一个免费的 API Key。
+
+**推荐使用阿里百炼（免费额度，国内直连）：**
+
+1. 打开 https://bailian.console.aliyun.com
+2. 注册/登录阿里云账号
+3. 在「模型广场」找到 `qwen-plus`，开通服务
+4. 在「API-KEY 管理」创建一个 API Key
+5. 在仓库文件夹中找到 `.env.example` 文件
+6. **复制一份并重命名为 `.env`**
+7. 用记事本打开 `.env`，把 `DASHSCOPE_API_KEY=***` 里的 `***` 换成你刚申请的 Key
+
+### 第 3 步：安装依赖
+
+打开终端（CMD / PowerShell / 终端），进入仓库文件夹，运行：
+
+```bash
 pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
+```
 
-# 复制环境变量配置
-cp .env.example .env   # 然后编辑 .env 填入你的 API Key
+> 国内用户建议加上 `-i` 参数（清华镜像），速度更快。
+> 如果提示 `pip 不是命令`，说明 Python 没装好，回去检查第 0 步。
 
-# 启动服务
+### 第 4 步：启动服务
+
+```bash
 python app.py
 ```
 
-然后浏览器访问 👉 **http://127.0.0.1:8000**
+看到类似下面的输出就说明启动成功了：
 
-## ❓ 常见问题
+```
+INFO:     Uvicorn running on http://127.0.0.1:8000
+[后台] 索引完成: 1674 个片段
+```
 
-**Q: 为什么双击 index.html 显示拒绝访问？**
-A: 这是 Web 应用，需要先运行 `start.bat` 启动后端服务，然后才能打开页面。
+> **首次启动**会自动索引仓库里的 PDF 文件（约 1-2 分钟），期间搜索功能不可用，稍等片刻即可。
+> **第二次启动**会从缓存加载，1 秒完成。
 
-**Q: start.bat 怎么用？**
-A: 在仓库文件夹里找到 `start.bat`，鼠标左键快速点两下即可。
+### 第 5 步：打开页面
 
-**Q: 启动后浏览器没自动打开？**
-A: 手动访问 `http://127.0.0.1:8000`
+打开你的浏览器，在地址栏输入：
+
+**http://127.0.0.1:8000**
+
+看到聊天界面就说明一切正常。可以试试输入「搜一下线代的资料」或「生成线代填空题」。
+
+### 关闭服务
+
+在终端里按 `Ctrl + C` 即可停止服务。
+
+---
+
+## Windows 用户：一键启动
+
+如果你用的是 Windows，仓库里有个 `start.bat` 文件，**双击它**就可以自动完成第 3、4 步（安装依赖 + 启动服务），浏览器也会自动打开。
+
+> ⚠️ 前提是你已经完成了 **第 1 步（下载代码）** 和 **第 2 步（配置 API Key）**。
+
+启动后如果想生成桌面快捷方式，可以双击 `create_shortcut.bat`。
+
+---
+
+## 功能一览
+
+| 功能 | 怎么说 | 示例 |
+|------|--------|------|
+| **搜索资料** | 直接说关键词 | 「搜一下微积分的资料」 |
+| **下载文件** | 搜索结果自带下载按钮 | 点击蓝色按钮即可 |
+| **生成练习题** | 说"生成 + 科目 + 填空题" | 「生成线代填空题」 |
+| **做习题** | 自动跳转到习题面板 | 填答案 → 提交批改 |
+
+---
+
+## 常见问题
+
+**Q: 双击 index.html 显示拒绝访问？**
+A: 这是 Web 应用，**不要直接双击 html 文件**。必须先运行 `python app.py` 或 `start.bat`，然后访问 `http://127.0.0.1:8000`。
 
 **Q: 提示 "Python 未找到"？**
-A: 先安装 Python 3.9+：https://www.python.org/downloads/
+A: 去 https://www.python.org/downloads/ 下载安装 Python 3.9+。安装时记得勾选「Add Python to PATH」。
 
-## ✨ 功能
+**Q: 启动后浏览器没自动弹出来？**
+A: 手动在浏览器地址栏输入 `http://127.0.0.1:8000` 即可。
 
-- 📄 **搜索复习资料** — 输入关键词，AI 自动检索 PDF 文档
-- 📥 **直接下载** — 搜索结果中每个文件都带下载链接
-- 📝 **生成练习题** — 说「生成线代填空题」，自动出 10 道概念填空题
-- 🧠 **智能问答** — 基于 RAG 引擎，结合文档内容回答你的问题
+**Q: 页面打开后是空白/无法连接？**
+A: 确认终端还在运行（没有按 Ctrl+C）。如果终端退了，重新运行 `python app.py`。
 
-## ⚙️ 配置
+**Q: 搜索说"知识库索引中"？**
+A: 首次启动需要 1-2 分钟索引所有 PDF，等终端显示「索引完成」后再搜索。
 
-首次使用需要配置 API Key。复制 `.env.example` 为 `.env`，填入你的 Key：
+**Q: `start.bat` 显示乱码？**
+A: 这是终端编码问题。可以改用 `python app.py` 手动启动。
 
-| 变量 | 说明 |
-|------|------|
-| `DASHSCOPE_API_KEY` | 通义千问 DashScope（默认，推荐） |
-| `OPENAI_API_KEY` | OpenAI（可选） |
-| `DEEPSEEK_API_KEY` | DeepSeek（可选） |
+**Q: 可以部署到服务器上让别人访问吗？**
+A: 可以，但需要修改 `app.py` 中的 `host="127.0.0.1"` 为 `host="0.0.0.0"`，并注意网络安全。
 
-## 🛠 技术栈
+---
+
+## 技术栈
 
 - **LLM**: Qwen-Plus / GPT-4o-mini / DeepSeek-Chat
 - **RAG**: 阿里百炼 text-embedding-v3 + 混合检索（语义+关键词）
-- **框架**: LangGraph Agent + FastAPI + WebSocket
-- **文档解析**: PyMuPDF + easyOCR + python-docx
+- **框架**: LangGraph Agent + FastAPI + WebSocket + Python
+- **前端**: HTML + CSS + Vanilla JS（无框架依赖）
+- **文档解析**: PyMuPDF + python-docx
