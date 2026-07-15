@@ -5,7 +5,9 @@ FastAPI 后端：将 Agent 接入 Web 页面
 import os
 import sys
 import json
+import re
 import uuid
+import hashlib
 import threading
 import uvicorn
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
@@ -77,10 +79,11 @@ def pack_docs(query: str) -> str:
             if r["path"] not in seen:
                 seen.add(r["path"])
                 files.append(r["path"])
-        # 生成可读文件名（isalnum() 在 Python3 中自动包含中文）
-        safe = "".join(c if c.isalnum() or c in "-_ " else "_" for c in query)[:20].strip()
-        if not safe:
-            safe = "docs"
+        # 生成 ASCII 安全文件名（HTTP 头部不能用中文）
+        safe = re.sub(r"[^a-zA-Z0-9]+", "_", query).strip("_").lower()[:20].strip("_")
+        if len(safe) < 2:
+            import hashlib
+            safe = hashlib.md5(query.encode()).hexdigest()[:6]
         unique_id = uuid.uuid4().hex[:8]
         filename = f"{safe}_{unique_id}.zip"
         zip_path = os.path.join(DOWNLOAD_DIR, filename)

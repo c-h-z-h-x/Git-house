@@ -5,7 +5,9 @@
 """
 
 import os
+import re
 import uuid
+import hashlib
 
 from langchain_openai import ChatOpenAI
 from langchain.tools import tool
@@ -73,10 +75,10 @@ def pack_docs(query: str) -> str:
                 files.append(r["path"])
 
         # 创建 zip（保存到统一下载目录）
-        # 文件名仅保留 ASCII 字母数字，防止中文导致链接异常
-        safe_name = "".join(c if c.isascii() and (c.isalnum() or c in "-_ ") else "_" for c in query)[:20].strip().strip("_")
-        if not safe_name:
-            safe_name = "docs"
+        # 生成 ASCII 安全文件名（HTTP 头部不能用中文）
+        safe_name = re.sub(r"[^a-zA-Z0-9]+", "_", query).strip("_").lower()[:20].strip("_")
+        if len(safe_name) < 2:
+            safe_name = hashlib.md5(query.encode()).hexdigest()[:6]
         unique_id = uuid.uuid4().hex[:8]
         filename = f"{safe_name}_{unique_id}.zip"
         zip_path = os.path.join(DOWNLOAD_DIR, filename)
