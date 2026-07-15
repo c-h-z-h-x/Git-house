@@ -13,8 +13,9 @@ server_*.log
 # Downloaded zip files
 downloads/
 
+# Server logs
+server_*.log
+
 # Temporary test scripts
 verify*.py
 test_*.py
-*.bat
-!start.bat
