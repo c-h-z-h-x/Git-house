@@ -30,8 +30,8 @@ REPO_DIR = os.path.dirname(os.path.abspath(__file__))
 def search_docs(query: str) -> str:
     """搜索知识库中与关键词匹配的文档，返回匹配的文件名和直接下载链接。"""
     try:
-        from rag_engine import RAGEngine
-        engine = RAGEngine(REPO_DIR)
+        from rag_engine import get_engine
+        engine = get_engine(REPO_DIR)
         results = engine.retrieve(query, top_k=10, mode="hybrid")
         if not results:
             return "没有找到匹配的文档。"
@@ -58,9 +58,8 @@ def generate_exercises(subject: str) -> str:
         from rag_engine import RAGEngine, load_document
         from pathlib import Path
 
-        engine = RAGEngine(REPO_DIR)
-
-        # 1) 搜索相关文档
+        from rag_engine import get_engine
+        engine = get_engine(REPO_DIR)
         results = engine.retrieve(subject, top_k=5, mode="hybrid")
         if not results:
             return "没有找到相关复习资料，无法生成习题。"
@@ -176,13 +175,16 @@ index_ready = threading.Event()
 def _index_worker():
     print("[后台] 开始索引文档库...", flush=True)
     try:
-        from rag_engine import RAGEngine
-        engine = RAGEngine(REPO_DIR)
+        from rag_engine import get_engine
+        engine = get_engine(REPO_DIR)
         n = engine.index()
         print(f"[后台] 索引完成: {n} 个片段", flush=True)
+        index_ready.set()
     except Exception as e:
         print(f"[后台] 索引失败: {e}", flush=True)
-    finally:
+        # 失败时也标记为就绪（降级为纯关键词搜索）
+        from rag_engine import get_engine
+        get_engine(REPO_DIR)._indexed = True  # 标记已尝试过
         index_ready.set()
 
 threading.Thread(target=_index_worker, daemon=True).start()
@@ -229,11 +231,12 @@ async def api_exercises(data: dict):
         return JSONResponse({"error": "请输入学科关键词"}, status_code=400)
 
     try:
-        from rag_engine import RAGEngine, load_document
+        from rag_engine import load_document
         from pathlib import Path
         from openai import OpenAI
 
-        engine = RAGEngine(REPO_DIR)
+        from rag_engine import get_engine
+        engine = get_engine(REPO_DIR)
         results = engine.retrieve(subject, top_k=5, mode="hybrid")
         if not results:
             return {"error": "没有找到相关复习资料"}
@@ -290,9 +293,12 @@ async def api_exercises(data: dict):
 @app.websocket("/ws")
 async def websocket_endpoint(ws: WebSocket):
     await ws.accept()
+
+    # 索引未就绪时给提示但不拒绝连接
     if not index_ready.is_set():
-        await ws.send_text(json.dumps({"reply": "知识库索引中，请稍候再试..."}, ensure_ascii=False))
-        return
+        await ws.send_text(json.dumps({
+            "reply": "📚 知识库索引中，首次启动需加载 156 份文档，大约 1-2 分钟..."
+        }, ensure_ascii=False))
 
     ag = get_agent()
     thread_id = "web-session-1"
@@ -306,6 +312,12 @@ async def websocket_endpoint(ws: WebSocket):
             if not query:
                 continue
 
+            if not index_ready.is_set():
+                await ws.send_text(json.dumps({
+                    "reply": "⏳ 知识库索引尚未完成，请稍候再试..."
+                }, ensure_ascii=False))
+                continue
+
             final_response = ""
             exercise_data = None
 
@@ -316,7 +328,6 @@ async def websocket_endpoint(ws: WebSocket):
             ):
                 last_msg = chunk["messages"][-1]
 
-                # 检查是否是 generate_exercises 的工具返回结果
                 if isinstance(last_msg, ToolMessage) and last_msg.name == "generate_exercises":
                     try:
                         parsed = json.loads(last_msg.content)
@@ -325,7 +336,6 @@ async def websocket_endpoint(ws: WebSocket):
                     except (json.JSONDecodeError, TypeError):
                         pass
 
-                # 记录最终 AI 回复
                 if isinstance(last_msg, AIMessage) and last_msg.content:
                     final_response = last_msg.content
 

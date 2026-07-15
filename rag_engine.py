@@ -4,6 +4,8 @@ RAG 引擎：索引 git 仓库代码 + PDF + Word 文档，提供检索增强生
 
 import os
 import re
+import pickle
+import hashlib
 from pathlib import Path
 from typing import List
 
@@ -11,92 +13,51 @@ from openai import OpenAI
 from config import LLM_CONFIG
 
 
-# ── 文档加载（支持 .py .md .txt .pdf .docx）────
-
-IGNORE_DIRS = {".git", "__pycache__", "venv", ".venv", "node_modules", ".mypy_cache"}
-
-# 只索引 PDF 和 Word 文档，跳过其他文件
-TEXT_EXTS = {
-    ".pdf", ".doc", ".docx",
-}
+# ── 文档加载 ─────────────────────────────
 
 SKIP_EXTS = {".py", ".pyc", ".pyo", ".md", ".txt", ".yaml", ".yml", ".json",
               ".toml", ".cfg", ".ini", ".env.example", ".gitignore"}
 
 
-def _load_text_file(path: Path) -> str:
-    return path.read_text(encoding="utf-8")
-
-
-def _load_pdf(path: Path, use_ocr: bool = True) -> str:
-    """提取 PDF 全文。use_ocr=True 时，文字不足自动用 OCR"""
+def _load_pdf(path: Path) -> str:
+    """提取 PDF 全文（跳过 OCR）"""
     import fitz
     doc = fitz.open(str(path))
-
-    texts = []
-    for page in doc:
-        texts.append(page.get_text())
-    text = "\n".join(texts).strip()
-
-    # 文字太少且启用 OCR 时才走 OCR
-    if use_ocr and len(text) < 50:
-        import os
-        os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
-        import easyocr
-        reader = easyocr.Reader(["ch_sim", "en"], gpu=False)
-        ocr_texts = []
-        for page in doc:
-            pix = page.get_pixmap(dpi=200)
-            img_bytes = pix.tobytes("png")
-            import numpy as np
-            from PIL import Image
-            import io
-            img = Image.open(io.BytesIO(img_bytes))
-            result = reader.readtext(np.array(img))
-            if result:
-                lines = sorted(result, key=lambda x: (x[0][0][1], x[0][0][0]))
-                ocr_texts.append(" ".join(item[1] for item in lines))
-        text = "\n".join(ocr_texts)
-
+    texts = [page.get_text() for page in doc]
     doc.close()
-    return text
+    return "\n".join(texts).strip()
 
 
 def _load_docx(path: Path) -> str:
-    """提取 Word 全文"""
     import docx
     doc = docx.Document(str(path))
     return "\n".join(p.text for p in doc.paragraphs)
 
 
-def load_document(path: Path, use_ocr: bool = True) -> str | None:
-    """根据扩展名自动选择解析器。use_ocr=False 跳过 OCR"""
+def load_document(path: Path, use_ocr: bool = False) -> str | None:
     ext = path.suffix.lower()
     try:
         if ext == ".pdf":
-            return _load_pdf(path, use_ocr=use_ocr)
+            return _load_pdf(path)
         elif ext in (".docx", ".doc"):
             return _load_docx(path)
-        elif ext in TEXT_EXTS:
-            return _load_text_file(path)
         return None
     except Exception as e:
         print(f"  [WARN] 无法解析 {path.name}: {e}")
         return None
 
 
+# ── 文件扫描（只扫 PDF/Word，控制深度）───
+
 def load_codebase(root_dir: str) -> List[dict]:
-    """加载仓库中所有支持的文件（跳过 .py 等代码文件）"""
+    """加载仓库中所有 PDF/Word 文档"""
     docs = []
     root = Path(root_dir).resolve()
+    # 只扫 PDF 和 Word 文件，跳过隐藏目录
     for f in root.rglob("*"):
-        # 跳过隐藏目录
         if any(part.startswith(".") for part in f.relative_to(root).parts):
             continue
-        if f.is_file():
-            # 跳过代码文件
-            if f.suffix.lower() in SKIP_EXTS:
-                continue
+        if f.is_file() and f.suffix.lower() in (".pdf", ".doc", ".docx"):
             content = load_document(f, use_ocr=False)
             if content and content.strip():
                 docs.append({"path": str(f.relative_to(root)), "content": content})
@@ -106,19 +67,16 @@ def load_codebase(root_dir: str) -> List[dict]:
 # ── 分块 ─────────────────────────────────
 
 def chunk_document(doc: dict, chunk_size: int = 800, overlap: int = 100) -> List[dict]:
-    """将文档按行分块"""
     lines = doc["content"].splitlines()
     chunks = []
     buffer = []
     size = 0
-
     for line in lines:
         buffer.append(line)
         size += len(line) + 1
         if size >= chunk_size:
             text = "\n".join(buffer)
             chunks.append({"path": doc["path"], "text": text, "seq": len(chunks)})
-            # overlap: 保留尾部若干行
             overlap_lines = []
             overlap_size = 0
             for l in reversed(buffer):
@@ -128,28 +86,18 @@ def chunk_document(doc: dict, chunk_size: int = 800, overlap: int = 100) -> List
                     break
             buffer = overlap_lines
             size = overlap_size
-
     if buffer:
         chunks.append({"path": doc["path"], "text": "\n".join(buffer), "seq": len(chunks)})
     return chunks
 
 
-# ── 分词工具 ─────────────────────────────
+# ── 分词 ─────────────────────────────────
 
 def tokenize(text: str) -> List[str]:
-    """简单分词：保留中文词 + 英文单词 + 数字，过滤停用词"""
-    import re
-    # 提取中文词（2字以上）
     chinese = re.findall(r"[\u4e00-\u9fff]{2,}", text)
-    # 提取英文单词 + 数字
     english = re.findall(r"[a-zA-Z]+\d*|\d+[a-zA-Z]+", text)
-    # 提取首字母缩写（如 CMake, RAG）
     upper = re.findall(r"[A-Z]{2,}", text)
-    
-    tokens = chinese + english + upper
-    # 转小写归一化
-    tokens = [t.lower() for t in tokens]
-    # 去重但保留顺序
+    tokens = [t.lower() for t in chinese + english + upper]
     seen = set()
     result = []
     for t in tokens:
@@ -159,34 +107,56 @@ def tokenize(text: str) -> List[str]:
     return result
 
 
-# ── Embedding ────────────────────────────
+# ── Embedding（批量版）───────────────────
 
-def get_embedding(text: str, client: OpenAI, model: str = "text-embedding-v3") -> List[float]:
-    resp = client.embeddings.create(model=model, input=text)
-    return resp.data[0].embedding
+def get_embeddings_batch(texts: List[str], client: OpenAI, model: str = "text-embedding-v3") -> List[List[float]]:
+    """批量获取 embedding，一次 API 调用处理多条文本"""
+    if not texts:
+        return []
+    # 分批：API 单次最多 2048 条
+    # 阿里百炼 embedding API 限制单次最多 10 条
+    batch_size = 10
+    all_embeds = []
+    for i in range(0, len(texts), batch_size):
+        batch = texts[i:i + batch_size]
+        resp = client.embeddings.create(model=model, input=batch)
+        # 按输入顺序排序
+        sorted_data = sorted(resp.data, key=lambda x: x.index)
+        all_embeds.extend([d.embedding for d in sorted_data])
+    return all_embeds
 
 
-# ── 混合向量存储（语义 + 关键词）───────────
+# ── 持久化索引 ──────────────────────────
+
+INDEX_CACHE_FILE = None  # 在 RAGEngine.__init__ 中设置
+
+def _cache_path(repo_dir: str) -> str:
+    """基于目录内容的 hash 生成缓存路径"""
+    return os.path.join(repo_dir, ".rag_cache.pkl")
+
+
+def _compute_digest(repo_dir: str) -> str:
+    """计算所有 PDF 文件的修改时间和大小的 hash，用于检测变更"""
+    h = hashlib.md5()
+    for f in sorted(Path(repo_dir).rglob("*.pdf")):
+        if any(part.startswith(".") for part in f.relative_to(repo_dir).parts):
+            continue
+        stat = f.stat()
+        h.update(f"{f.relative_to(repo_dir)}:{stat.st_mtime}:{stat.st_size}".encode())
+    return h.hexdigest()
+
+
+# ── 混合向量存储 ─────────────────────────
 
 class SimpleVectorStore:
-    """
-    简易向量存储 + 关键词搜索（BM25 风格）
-    
-    - search(): 纯语义搜索（余弦相似度）
-    - keyword_search(): 纯关键词搜索（词频匹配）
-    - hybrid_search(): 语义 + 关键词加权融合
-    """
-
     def __init__(self):
         self.chunks: List[dict] = []
         self.embeddings: List[List[float]] = []
-        # 关键词索引
-        self._term_index: dict[str, list[tuple[int, int]]] = {}  # term -> [(chunk_idx, count)]
+        self._term_index: dict[str, list[tuple[int, int]]] = {}
 
     def add(self, chunks: List[dict], embeddings: List[List[float]]):
         self.chunks.extend(chunks)
         self.embeddings.extend(embeddings)
-        # 建立倒排索引
         base = len(self.chunks) - len(chunks)
         for i, chunk in enumerate(chunks):
             tokens = tokenize(chunk["text"])
@@ -199,7 +169,6 @@ class SimpleVectorStore:
                 self._term_index[term].append((base + i, count))
 
     def search(self, query_embed: List[float], top_k: int = 5) -> List[dict]:
-        """纯语义搜索：余弦相似度"""
         import numpy as np
         q = np.array(query_embed)
         scores = [
@@ -210,48 +179,29 @@ class SimpleVectorStore:
         return [{**self.chunks[i], "score": scores[i], "method": "semantic"} for i in top_indices]
 
     def keyword_search(self, query: str, top_k: int = 5) -> List[dict]:
-        """
-        关键词搜索：基于 BM25 风格的词频匹配
-        特别适合搜课程名："人工智能导引"、"微积分A"、"大学物理"
-        """
         query_tokens = tokenize(query)
         if not query_tokens:
             return []
-
-        # 对每个 chunk 计算关键词得分
         scores = [0.0] * len(self.chunks)
         import math
         N = len(self.chunks)
-        
         for term in query_tokens:
             if term not in self._term_index:
                 continue
             postings = self._term_index[term]
-            df = len(postings)  # 包含该词的文档数
+            df = len(postings)
             idf = math.log((N - df + 0.5) / (df + 0.5) + 1.0)
             for idx, count in postings:
                 scores[idx] += idf * (count / (count + 1.5))
-
-        # 额外加分：完整短语匹配（如 "人工智能导引" 完全出现在 chunk 中）
         raw_query = query.lower()
         for i, chunk in enumerate(self.chunks):
             if raw_query in chunk["text"].lower():
                 scores[i] += len(query_tokens) * 2
-
-        top_indices = sorted(
-            range(len(scores)), key=lambda i: scores[i], reverse=True
-        )[:top_k]
+        top_indices = sorted(range(len(scores)), key=lambda i: scores[i], reverse=True)[:top_k]
         return [{**self.chunks[i], "score": scores[i], "method": "keyword"} for i in top_indices if scores[i] > 0]
 
-    def hybrid_search(self, query: str, query_embed: List[float], top_k: int = 5,
-                      alpha: float = 0.5) -> List[dict]:
-        """
-        混合搜索：语义 + 关键词，按权重融合
-        alpha=1: 纯语义  alpha=0: 纯关键词
-        """
+    def hybrid_search(self, query: str, query_embed: List[float], top_k: int = 5, alpha: float = 0.5) -> List[dict]:
         import numpy as np
-        
-        # 语义得分（归一化到 [0,1]）
         q = np.array(query_embed)
         sem_scores = np.array([
             np.dot(q, np.array(e)) / (np.linalg.norm(q) * np.linalg.norm(e) + 1e-10)
@@ -261,7 +211,6 @@ class SimpleVectorStore:
         if sem_max > sem_min:
             sem_scores = (sem_scores - sem_min) / (sem_max - sem_min)
 
-        # 关键词得分（归一化到 [0,1]）
         query_tokens = tokenize(query)
         kw_scores = np.zeros(len(self.chunks))
         if query_tokens:
@@ -283,16 +232,11 @@ class SimpleVectorStore:
             if kw_max > kw_min:
                 kw_scores = (kw_scores - kw_min) / (kw_max - kw_min)
 
-        # 加权融合
         combined = alpha * sem_scores + (1 - alpha) * kw_scores
-        top_indices = sorted(
-            range(len(combined)), key=lambda i: combined[i], reverse=True
-        )[:top_k]
+        top_indices = sorted(range(len(combined)), key=lambda i: combined[i], reverse=True)[:top_k]
         return [{
-            **self.chunks[i],
-            "score": float(combined[i]),
-            "sem_score": float(sem_scores[i]),
-            "kw_score": float(kw_scores[i]),
+            **self.chunks[i], "score": float(combined[i]),
+            "sem_score": float(sem_scores[i]), "kw_score": float(kw_scores[i]),
             "method": "hybrid",
         } for i in top_indices]
 
@@ -301,7 +245,13 @@ class SimpleVectorStore:
         return len(self.chunks)
 
 
-# ── RAG Engine ───────────────────────────
+# ── RAG Engine（全局单例 + 磁盘缓存）─────
+
+_engine_instance = None
+_engine_lock = threading_lock = None
+import threading as _threading
+_engine_lock = _threading.Lock()
+
 
 class RAGEngine:
     def __init__(self, repo_dir: str):
@@ -311,39 +261,80 @@ class RAGEngine:
         self.client = OpenAI(api_key=cfg["api_key"], base_url=cfg["base_url"])
         self.embed_model = "text-embedding-v3"
         self._indexed = False
+        self._cache_file = _cache_path(repo_dir)
+
+    def _try_load_cache(self) -> bool:
+        """尝试从磁盘加载缓存的索引"""
+        cache_path = self._cache_file
+        digest_path = cache_path + ".digest"
+        if not os.path.exists(cache_path) or not os.path.exists(digest_path):
+            return False
+        try:
+            with open(digest_path) as f:
+                cached_digest = f.read().strip()
+            if cached_digest != _compute_digest(self.repo_dir):
+                print("  文件已变更，重新索引")
+                return False
+            with open(cache_path, "rb") as f:
+                data = pickle.load(f)
+            self.store.chunks = data["chunks"]
+            self.store.embeddings = data["embeddings"]
+            self.store._term_index = data["term_index"]
+            self._indexed = True
+            print(f"  从缓存加载: {len(self.store.chunks)} 个片段")
+            return True
+        except Exception as e:
+            print(f"  缓存加载失败: {e}")
+            return False
+
+    def _save_cache(self):
+        """将索引保存到磁盘"""
+        try:
+            data = {
+                "chunks": self.store.chunks,
+                "embeddings": self.store.embeddings,
+                "term_index": self.store._term_index,
+            }
+            with open(self._cache_file, "wb") as f:
+                pickle.dump(data, f)
+            with open(self._cache_file + ".digest", "w") as f:
+                f.write(_compute_digest(self.repo_dir))
+            print(f"  索引已缓存到磁盘")
+        except Exception as e:
+            print(f"  缓存保存失败: {e}")
 
     def index(self):
-        """索引整个仓库（代码 + PDF + Word）"""
+        """索引整个仓库"""
+        # 先尝试从缓存加载
+        if self._try_load_cache():
+            return len(self.store.chunks)
+
         print(f"  扫描目录: {self.repo_dir}")
         docs = load_codebase(self.repo_dir)
         print(f"  发现 {len(docs)} 个文档")
 
+        # 分批分块 + 批量 embedding
         all_chunks = []
-        all_embeds = []
         for doc in docs:
             chunks = chunk_document(doc)
-            for chunk in chunks:
-                emb = get_embedding(chunk["text"], self.client, self.embed_model)
-                all_chunks.append(chunk)
-                all_embeds.append(emb)
+            all_chunks.extend(chunks)
+
+        print(f"  分块: {len(all_chunks)} 个片段")
+        print(f"  生成 embedding（批量处理 {len(all_chunks)} 条）...")
+
+        chunk_texts = [c["text"] for c in all_chunks]
+        all_embeds = get_embeddings_batch(chunk_texts, self.client, self.embed_model)
 
         self.store.add(all_chunks, all_embeds)
         self._indexed = True
-        print(f"  已索引 {len(all_chunks)} 个片段")
+        self._save_cache()
+        print(f"  索引完成: {len(all_chunks)} 个片段")
         return len(all_chunks)
 
-    def retrieve(self, query: str, top_k: int = 5, mode: str = "hybrid",
-                   alpha: float = 0.5) -> List[dict]:
-        """检索文档
-        
-        参数:
-            mode: "hybrid" 混合 / "semantic" 纯语义 / "keyword" 纯关键词
-            alpha: 混合权重（1=纯语义, 0=纯关键词）
-        """
+    def retrieve(self, query: str, top_k: int = 5, mode: str = "hybrid", alpha: float = 0.5) -> List[dict]:
         if not self._indexed:
             self.index()
-        q_emb = get_embedding(query, self.client, self.embed_model)
-        
+        q_emb = get_embeddings_batch([query], self.client, self.embed_model)[0]
         if mode == "keyword":
             return self.store.keyword_search(query, top_k=top_k)
         elif mode == "semantic":
@@ -354,20 +345,14 @@ class RAGEngine:
     def build_context(self, results: List[dict]) -> str:
         parts = []
         for i, r in enumerate(results, 1):
-            parts.append(
-                f"[{i}] {r['path']} (相似度: {r['score']:.3f})\n"
-                f"```\n{r['text'][:1500]}\n```"
-            )
+            parts.append(f"[{i}] {r['path']} (相似度: {r['score']:.3f})\n```\n{r['text'][:1500]}\n```")
         return "\n\n".join(parts)
 
     def query(self, question: str, top_k: int = 5) -> dict:
-        """一站式 RAG 问答"""
         results = self.retrieve(question, top_k=top_k)
         context = self.build_context(results)
-
         cfg = LLM_CONFIG["dashscope"]
         llm_client = OpenAI(api_key=cfg["api_key"], base_url=cfg["base_url"])
-
         system_msg = (
             "你是一个知识库助手。你的知识库是当前项目中的所有文档（代码、PDF、Word 等）。\n"
             "请根据检索到的文档内容回答用户问题。\n"
@@ -375,21 +360,23 @@ class RAGEngine:
             "引用文档时请标注文件路径和 [1]、[2] 编号。\n"
             "如果检索到的内容不足以回答问题，请明确告知。"
         )
-
-        user_msg = f"问题：{question}\n\n相关文档内容：\n{context}"
-
         resp = llm_client.chat.completions.create(
             model=cfg["model"],
             messages=[
                 {"role": "system", "content": system_msg},
-                {"role": "user", "content": user_msg},
+                {"role": "user", "content": f"问题：{question}\n\n相关文档内容：\n{context}"},
             ],
             temperature=0.2,
         )
         answer = resp.choices[0].message.content.strip()
+        return {"answer": answer, "sources": list(set(r["path"] for r in results)), "context": context}
 
-        return {
-            "answer": answer,
-            "sources": list(set(r["path"] for r in results)),
-            "context": context,
-        }
+
+def get_engine(repo_dir: str) -> RAGEngine:
+    """获取全局唯一的 RAGEngine 实例"""
+    global _engine_instance
+    if _engine_instance is None:
+        with _engine_lock:
+            if _engine_instance is None:
+                _engine_instance = RAGEngine(repo_dir)
+    return _engine_instance
