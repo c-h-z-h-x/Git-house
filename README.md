@@ -7,3 +7,42 @@
 * [mathsdream/THU-math-source](https://github.com/mathsdream/THU-math-source)
 
 如想参与建设或有更好的想法或建议，欢迎email与我们联系：2920095282@qq.com
+
+---
+
+## 🚀 快速启动
+
+```bash
+# 安装依赖
+pip install -r requirements.txt
+
+# 启动 Web 服务
+python app.py
+```
+
+打开浏览器访问：
+
+👉 **http://127.0.0.1:8000**
+
+## ✨ 功能
+
+- 📄 **搜索复习资料** — 输入关键词，AI 自动检索 PDF 文档
+- 📦 **打包下载** — 搜索到的文档可一键打包为 ZIP 下载到本地
+- 🧠 **智能问答** — 基于 RAG 引擎，结合文档内容回答你的问题
+
+## ⚙️ 配置
+
+在 `.env` 中设置 API Key（已预配阿里百炼工作空间）：
+
+| 变量 | 说明 |
+|------|------|
+| `DASHSCOPE_API_KEY` | 通义千问 DashScope（默认） |
+| `OPENAI_API_KEY` | OpenAI（可选） |
+| `DEEPSEEK_API_KEY` | DeepSeek（可选） |
+
+## 🛠 技术栈
+
+- **LLM**: Qwen-Plus / GPT-4o-mini / DeepSeek-Chat
+- **RAG**: 阿里百炼 text-embedding-v3 + 混合检索（语义+关键词）
+- **框架**: LangGraph Agent + FastAPI + WebSocket
+- **文档解析**: PyMuPDF + easyOCR + python-docx
