@@ -144,12 +144,22 @@ function escapeHtml(str) {
 
 function linkify(text) {
   let html = escapeHtml(text);
-  // 把 /files/xxx 转为可点击的下载按钮
+  // 1) 先处理 LLM 输出的 Markdown 链接: [text](/files/xxx)
+  // 贪婪匹配到最后一个 )，兼容文件名中的括号
+  html = html.replace(/\[([^\]]+)\]\(\/files\/(.+)\)/g, function(match, text, filepath) {
+    return '<a href="/files/' + escapeHtml(filepath) + '" download style="display:inline-block;margin:4px 0;padding:6px 14px;background:#1a73e8;color:#fff;border-radius:6px;text-decoration:none;font-size:13px;cursor:pointer;">📥 下载 ' + escapeHtml(text) + '</a>';
+  });
+  // 2) 再处理纯文本的 /files/xxx（不允许 ) 尾缀，但允许 ) 出现在文件名中间）
   html = html.replace(/\/files\/[^\s<"']+/g, function(match) {
-    const filename = match.replace('/files/', '')
-      .split('/').pop()  // 只取文件名部分
-      .replace(/^.*[/\\]/, '');
-    return `<a href="${match}" download style="display:inline-block;margin:4px 0;padding:6px 14px;background:#1a73e8;color:#fff;border-radius:6px;text-decoration:none;font-size:13px;cursor:pointer;">📥 下载 ${escapeHtml(filename)}</a>`;
+    // 如果末尾有 ) 且前面没有匹配的 ( ，说明是多余的 Markdown 尾缀
+    var cleanMatch = match;
+    var parenCount = (cleanMatch.match(/\(/g)||[]).length;
+    var closeParenCount = (cleanMatch.match(/\)/g)||[]).length;
+    if (closeParenCount > parenCount) {
+      cleanMatch = cleanMatch.replace(/\)+$/, '');
+    }
+    var filename = cleanMatch.replace('/files/', '').split('/').pop().replace(/^.*[/\\]/, '');
+    return '<a href="' + cleanMatch + '" download style="display:inline-block;margin:4px 0;padding:6px 14px;background:#1a73e8;color:#fff;border-radius:6px;text-decoration:none;font-size:13px;cursor:pointer;">📥 下载 ' + escapeHtml(filename) + '</a>';
   });
   return html;
 }

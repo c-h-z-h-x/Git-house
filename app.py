@@ -44,8 +44,8 @@ def search_docs(query: str) -> str:
         lines = [f"找到 {len(files)} 个匹配结果：", ""]
         for i, r in enumerate(files, 1):
             lines.append(f"{i}. {r['path']}  (匹配度: {r['score']:.3f})")
-            # 每个文件附上直接下载链接
-            lines.append(f"   📥 /files/{r['path']}")
+            # 用箭头分隔，LLM 不易误包装为 Markdown
+            lines.append(f"   下载 →  /files/{r['path']}")
         return "\n".join(lines)
     except Exception as e:
         return f"搜索失败: {e}"
@@ -77,7 +77,8 @@ def get_agent():
         tools = [search_docs, current_time]
         system_prompt = (
             "你是一个AI复习资料提供助手。请用简洁明了的语句为用户解答疑惑。\n"
-            "使用 search_docs 搜索复习资料，结果中自带下载链接，告知用户点击即可下载。\n"
+            "使用 search_docs 搜索复习资料，结果中自带下载链接。\n"
+            "直接输出 /files/xxx 原始链接，不要用 Markdown 格式包裹它们。\n"
             "如果不清楚答案请直接回答不知道，不需要丰富的感情。"
         )
         memory = MemorySaver()
