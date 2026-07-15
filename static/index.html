@@ -2,584 +2,440 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>复习资料助手</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>复习资料助手 · Git-house</title>
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-  body {
-    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
-    background: #f0f2f5;
-    height: 100vh;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+  /* ── Reset & Base ── */
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --accent:oklch(55% 0.15 260);
+    --accent-soft:oklch(70% 0.08 260);
+    --accent-bg:oklch(95% 0.03 260);
+    --surface:oklch(100% 0 0);
+    --sidebar:oklch(97% 0.005 260);
+    --border:oklch(92% 0.005 260);
+    --text:oklch(18% 0.01 260);
+    --text-secondary:oklch(50% 0.005 260);
+    --text-muted:oklch(70% 0 0);
+    --success:oklch(55% 0.15 145);
+    --error:oklch(52% 0.18 25);
+    --radius:12px;
+    --radius-sm:8px;
   }
-  .container {
-    width: 680px;
-    max-width: 96vw;
-    height: 90vh;
-    background: #fff;
-    border-radius: 16px;
-    box-shadow: 0 8px 32px rgba(0,0,0,.1);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
+  @media(prefers-color-scheme:dark){
+    :root{
+      --accent:oklch(65% 0.18 260);
+      --accent-soft:oklch(55% 0.12 260);
+      --accent-bg:oklch(22% 0.05 260);
+      --surface:oklch(14% 0.01 260);
+      --sidebar:oklch(11% 0.01 260);
+      --border:oklch(22% 0.01 260);
+      --text:oklch(92% 0.005 260);
+      --text-secondary:oklch(62% 0.005 260);
+      --text-muted:oklch(42% 0 0);
+    }
   }
-
-  /* ── 标签栏 ── */
-  .tabs {
-    display: flex;
-    border-bottom: 1px solid #eee;
-    background: #fafafa;
-  }
-  .tab-btn {
-    flex: 1;
-    padding: 14px 0;
-    border: none;
-    background: transparent;
-    font-size: 14px;
-    font-weight: 500;
-    color: #888;
-    cursor: pointer;
-    transition: all .2s;
-    border-bottom: 2px solid transparent;
-  }
-  .tab-btn:hover { color: #555; }
-  .tab-btn.active {
-    color: #1a73e8;
-    border-bottom-color: #1a73e8;
-    background: #fff;
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei","Segoe UI",system-ui,sans-serif;
+    background:var(--sidebar);
+    color:var(--text);
+    height:100dvh;
+    overflow:hidden;
+    font-size:14px;
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
   }
 
-  /* ── 面板容器 ── */
-  .panels { flex: 1; display: flex; overflow: hidden; position: relative; }
-  .panel {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    transition: opacity .25s, transform .25s;
-    opacity: 0;
-    transform: translateX(20px);
-    pointer-events: none;
+  /* ── Layout: Three-Column Desktop ── */
+  .app{display:flex;height:100dvh;max-width:1440px;margin:0 auto;padding:8px;gap:8px}
+  @media(max-width:900px){.app{padding:0;gap:0}}
+
+  /* ── Sidebar ── */
+  .sidebar{
+    width:260px;flex-shrink:0;
+    background:var(--sidebar);border-radius:var(--radius);
+    display:flex;flex-direction:column;padding:16px;gap:4px;
+    border:1px solid var(--border);
   }
-  .panel.active {
-    opacity: 1;
-    transform: translateX(0);
-    pointer-events: auto;
+  @media(max-width:900px){.sidebar{display:none}}
+  .sidebar-brand{
+    font-size:15px;font-weight:600;padding:8px 12px;margin-bottom:8px;
+    display:flex;align-items:center;gap:8px;color:var(--text);
+  }
+  .sidebar-brand span{background:var(--accent);color:#fff;width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px}
+  .sidebar-nav{display:flex;flex-direction:column;gap:2px;flex:1}
+  .sidebar-nav button{
+    display:flex;align-items:center;gap:10px;padding:10px 12px;
+    border:none;border-radius:var(--radius-sm);
+    background:transparent;color:var(--text-secondary);
+    font-size:13px;cursor:pointer;transition:all .15s;
+    text-align:left;width:100%;
+  }
+  .sidebar-nav button:hover{background:var(--accent-bg);color:var(--text)}
+  .sidebar-nav button.active{background:var(--accent-bg);color:var(--accent);font-weight:500}
+  .sidebar-nav button .icon{font-size:16px;width:20px;text-align:center;flex-shrink:0}
+  .sidebar-footer{
+    border-top:1px solid var(--border);padding-top:12px;margin-top:auto;
+    font-size:11px;color:var(--text-muted);padding:12px 12px 4px;
   }
 
-  /* ========= 聊天面板 ========= */
-  .chat-header {
-    padding: 14px 24px 10px;
-    border-bottom: 1px solid #eee;
-    background: #fff;
-  }
-  .chat-header h1 { font-size: 17px; font-weight: 600; color: #1a1a2e; }
-  .chat-header p { font-size: 12px; color: #999; margin-top: 1px; }
-  .messages {
-    flex: 1;
-    overflow-y: auto;
-    padding: 16px 24px;
-    scroll-behavior: smooth;
-  }
-  .messages::-webkit-scrollbar { width: 4px; }
-  .messages::-webkit-scrollbar-thumb { background: #ddd; border-radius: 4px; }
-  .msg { margin-bottom: 14px; display: flex; }
-  .msg.user { justify-content: flex-end; }
-  .msg.bot { justify-content: flex-start; }
-  .bubble {
-    max-width: 80%;
-    padding: 10px 16px;
-    border-radius: 12px;
-    font-size: 14px;
-    line-height: 1.6;
-    white-space: pre-wrap;
-    word-break: break-word;
-  }
-  .msg.user .bubble {
-    background: #1a73e8;
-    color: #fff;
-    border-bottom-right-radius: 4px;
-  }
-  .msg.bot .bubble {
-    background: #f0f2f5;
-    color: #1a1a2e;
-    border-bottom-left-radius: 4px;
-  }
-  .msg.bot .bubble.loading { color: #999; font-style: italic; }
-  .chat-input-area {
-    padding: 12px 24px 16px;
-    border-top: 1px solid #eee;
-    display: flex;
-    gap: 8px;
-    background: #fff;
-  }
-  .chat-input-area input {
-    flex: 1;
-    padding: 10px 14px;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    font-size: 14px;
-    outline: none;
-    transition: border .2s;
-  }
-  .chat-input-area input:focus { border-color: #1a73e8; }
-  .chat-input-area button {
-    padding: 10px 20px;
-    background: #1a73e8;
-    color: #fff;
-    border: none;
-    border-radius: 8px;
-    font-size: 14px;
-    cursor: pointer;
-    transition: background .2s;
-  }
-  .chat-input-area button:hover { background: #1557b0; }
-  .chat-input-area button:disabled { background: #aaa; cursor: not-allowed; }
-  .chat-hint {
-    text-align: center;
-    padding: 6px 24px 12px;
-    font-size: 12px;
-    color: #bbb;
+  /* ── Main Panel ── */
+  .main{
+    flex:1;display:flex;flex-direction:column;
+    background:var(--surface);border-radius:var(--radius);
+    border:1px solid var(--border);overflow:hidden;
+    min-width:0;
   }
 
-  /* ========= 习题面板 ========= */
-  .exercise-area {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
+  /* ── Chat Header ── */
+  .chat-header{
+    padding:16px 24px;border-bottom:1px solid var(--border);
+    display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
   }
-  .exercise-header {
-    padding: 14px 24px 10px;
-    border-bottom: 1px solid #eee;
-  }
-  .exercise-header h2 { font-size: 17px; font-weight: 600; color: #1a1a2e; }
-  .exercise-header .src { font-size: 12px; color: #999; margin-top: 2px; }
-  .exercise-body {
-    flex: 1;
-    overflow-y: auto;
-    padding: 16px 24px;
-  }
-  .exercise-body::-webkit-scrollbar { width: 4px; }
-  .exercise-body::-webkit-scrollbar-thumb { background: #ddd; border-radius: 4px; }
+  .chat-header h1{font-size:16px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:8px}
+  .chat-header h1 span{width:8px;height:8px;border-radius:50%;background:var(--success);display:inline-block}
+  .chat-header .status{font-size:12px;color:var(--text-muted)}
 
-  .eq-wrap {
-    background: #fafbfc;
-    border: 1px solid #e8eaed;
-    border-radius: 10px;
-    padding: 14px 16px;
-    margin-bottom: 12px;
+  /* ── Messages ── */
+  .messages{flex:1;overflow-y:auto;padding:20px 24px;scroll-behavior:smooth}
+  .messages::-webkit-scrollbar{width:4px}
+  .messages::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+  .msg{margin-bottom:16px;display:flex}
+  .msg.user{justify-content:flex-end}
+  .msg.bot{justify-content:flex-start}
+  .bubble{
+    max-width:72%;padding:12px 18px;border-radius:var(--radius);
+    font-size:14px;line-height:1.7;white-space:pre-wrap;word-break:break-word;
+    animation:fadeSlide .25s ease-out;
   }
-  .eq-wrap.correct { border-color: #34a853; background: #f0faf4; }
-  .eq-wrap.wrong { border-color: #ea4335; background: #fef2f2; }
+  .msg.user .bubble{
+    background:var(--accent);color:#fff;
+    border-bottom-right-radius:4px;
+  }
+  .msg.bot .bubble{
+    background:var(--accent-bg);color:var(--text);
+    border-bottom-left-radius:4px;
+  }
+  .msg.bot .bubble.loading{color:var(--text-muted);font-style:italic}
+  @keyframes fadeSlide{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 
-  .eq-num {
-    display: inline-block;
-    width: 24px;
-    height: 24px;
-    line-height: 24px;
-    text-align: center;
-    border-radius: 50%;
-    background: #1a73e8;
-    color: #fff;
-    font-size: 12px;
-    font-weight: 600;
-    margin-right: 8px;
-    vertical-align: middle;
+  /* ── Chat Input ── */
+  .chat-input-area{
+    padding:16px 24px 20px;border-top:1px solid var(--border);
+    display:flex;gap:8px;flex-shrink:0;
   }
-  .eq-text {
-    font-size: 14px;
-    line-height: 1.7;
-    color: #1a1a2e;
-    vertical-align: middle;
+  .chat-input-area input{
+    flex:1;padding:10px 16px;
+    border:1px solid var(--border);border-radius:var(--radius-sm);
+    font-size:14px;outline:none;transition:border .2s;
+    background:var(--surface);color:var(--text);
   }
-  .eq-text .blank-highlight {
-    display: inline-block;
-    min-width: 80px;
-    border-bottom: 2px dashed #1a73e8;
-    color: #1a73e8;
-    font-weight: 600;
-    text-align: center;
-    padding: 0 4px;
+  .chat-input-area input:focus{border-color:var(--accent)}
+  .chat-input-area input::placeholder{color:var(--text-muted)}
+  .chat-input-area button{
+    padding:10px 24px;
+    background:var(--accent);color:#fff;
+    border:none;border-radius:var(--radius-sm);
+    font-size:14px;cursor:pointer;transition:background .2s,transform .1s;
   }
-  .eq-text .blank-filled {
-    border-bottom: 2px solid #34a853;
-    color: #34a853;
-  }
-  .eq-text .blank-wrong {
-    border-bottom: 2px solid #ea4335;
-    color: #ea4335;
-  }
+  .chat-input-area button:hover{filter:brightness(1.1)}
+  .chat-input-area button:active{transform:scale(.97)}
+  .chat-input-area button:disabled{opacity:.4;cursor:not-allowed}
+  .chat-hint{text-align:center;padding:0 24px 12px;font-size:11px;color:var(--text-muted);flex-shrink:0}
 
-  .eq-answer-row {
-    display: flex;
-    gap: 8px;
-    margin-top: 10px;
-    align-items: center;
-  }
-  .eq-answer-row input {
-    flex: 1;
-    padding: 8px 12px;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    font-size: 13px;
-    outline: none;
-    transition: border .2s;
-  }
-  .eq-answer-row input:focus { border-color: #1a73e8; }
-  .eq-answer-row input:disabled { background: #f5f5f5; }
-  .eq-answer-row .result-tag {
-    font-size: 13px;
-    font-weight: 500;
-    white-space: nowrap;
-    padding: 4px 10px;
-    border-radius: 6px;
-  }
-  .eq-answer-row .result-tag.correct { color: #34a853; background: #e6f4ea; }
-  .eq-answer-row .result-tag.wrong { color: #ea4335; background: #fce8e6; }
-  .eq-answer-row .correct-answer {
-    font-size: 12px;
-    color: #888;
-  }
+  /* ── Exercise Panel ── */
+  .exercise-area{flex:1;display:flex;flex-direction:column;overflow:hidden}
+  .exercise-header{padding:16px 24px;border-bottom:1px solid var(--border);flex-shrink:0}
+  .exercise-header h2{font-size:16px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:8px}
+  .exercise-header .src{font-size:12px;color:var(--text-muted);margin-top:2px}
+  .exercise-body{flex:1;overflow-y:auto;padding:16px 24px}
+  .exercise-body::-webkit-scrollbar{width:4px}
+  .exercise-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
 
-  .exercise-footer {
-    padding: 14px 24px 18px;
-    border-top: 1px solid #eee;
-    display: flex;
-    gap: 10px;
-    align-items: center;
-    background: #fff;
+  .eq-wrap{
+    background:var(--accent-bg);border:1px solid var(--border);
+    border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:10px;
+    animation:fadeSlide .25s ease-out both;
   }
-  .exercise-footer .score {
-    font-size: 15px;
-    font-weight: 600;
-    color: #1a73e8;
-    min-width: 80px;
+  .eq-wrap:nth-child(1){animation-delay:0s}
+  .eq-wrap:nth-child(2){animation-delay:.03s}
+  .eq-wrap:nth-child(3){animation-delay:.06s}
+  .eq-wrap.correct{border-color:var(--success);background:oklch(95% 0.03 145)}
+  .eq-wrap.wrong{border-color:var(--error);background:oklch(95% 0.03 25)}
+  @media(prefers-color-scheme:dark){
+    .eq-wrap.correct{background:oklch(20% 0.05 145)}
+    .eq-wrap.wrong{background:oklch(20% 0.05 25)}
   }
-  .exercise-footer button {
-    padding: 9px 20px;
-    border: none;
-    border-radius: 8px;
-    font-size: 13px;
-    cursor: pointer;
-    transition: background .2s;
+  .eq-num{
+    display:inline-flex;width:24px;height:24px;align-items:center;justify-content:center;
+    border-radius:50%;background:var(--accent);color:#fff;font-size:12px;font-weight:600;
+    margin-right:8px;vertical-align:middle;flex-shrink:0;
   }
-  .btn-submit { background: #1a73e8; color: #fff; }
-  .btn-submit:hover { background: #1557b0; }
-  .btn-submit:disabled { background: #aaa; cursor: not-allowed; }
-  .btn-retry { background: #f0f2f5; color: #333; }
-  .btn-retry:hover { background: #e0e2e5; }
+  .eq-text{font-size:14px;line-height:1.7;color:var(--text)}
+  .eq-text .blank-highlight{
+    display:inline-block;min-width:80px;
+    border-bottom:2px dashed var(--accent);color:var(--accent);
+    font-weight:600;text-align:center;padding:0 4px;
+  }
+  .eq-text .blank-filled{border-bottom-color:var(--success);color:var(--success)}
+  .eq-text .blank-wrong{border-bottom-color:var(--error);color:var(--error)}
+  .eq-answer-row{display:flex;gap:8px;margin-top:10px;align-items:center}
+  .eq-answer-row input{
+    flex:1;padding:8px 12px;border:1px solid var(--border);
+    border-radius:6px;font-size:13px;outline:none;transition:border .2s;
+    background:var(--surface);color:var(--text);
+  }
+  .eq-answer-row input:focus{border-color:var(--accent)}
+  .eq-answer-row input:disabled{opacity:.5}
+  .eq-answer-row .result-tag{font-size:13px;font-weight:500;white-space:nowrap;padding:4px 10px;border-radius:6px}
+  .eq-answer-row .result-tag.correct{color:var(--success);background:oklch(95% 0.03 145)}
+  .eq-answer-row .result-tag.wrong{color:var(--error);background:oklch(95% 0.03 25)}
+  .eq-answer-row .correct-answer{font-size:12px;color:var(--text-muted);margin-left:4px}
 
-  .exercise-empty {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    color: #bbb;
-    font-size: 14px;
-    gap: 8px;
+  .exercise-footer{
+    padding:14px 24px 18px;border-top:1px solid var(--border);
+    display:flex;gap:12px;align-items:center;flex-shrink:0;
   }
-  .exercise-empty .big-icon { font-size: 48px; }
+  .exercise-footer .score{font-size:15px;font-weight:600;color:var(--accent);min-width:80px}
+  .exercise-footer button{
+    padding:9px 20px;border:none;border-radius:var(--radius-sm);
+    font-size:13px;cursor:pointer;transition:all .15s;
+  }
+  .btn-submit{background:var(--accent);color:#fff}
+  .btn-submit:hover{filter:brightness(1.1)}
+  .btn-submit:disabled{opacity:.4;cursor:not-allowed}
+  .btn-retry{background:var(--accent-bg);color:var(--text)}
+  .btn-retry:hover{filter:brightness(.95)}
 
-  @keyframes fadeSlideIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+  .exercise-empty{
+    flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    color:var(--text-muted);gap:8px;font-size:14px;
   }
-  .eq-wrap { animation: fadeSlideIn .3s ease; }
-  .eq-wrap:nth-child(2) { animation-delay: .05s; }
-  .eq-wrap:nth-child(3) { animation-delay: .1s; }
+  .exercise-empty .big-icon{font-size:48px;opacity:.3}
+
+  /* ── Transition: panels ── */
+  .panels{flex:1;display:flex;overflow:hidden;position:relative}
+  .panel{position:absolute;inset:0;display:flex;flex-direction:column;
+    transition:opacity .2s,transform .2s;opacity:0;transform:translateX(16px);pointer-events:none}
+  .panel.active{opacity:1;transform:translateX(0);pointer-events:auto}
+
+  /* ── Status dot pulse ── */
+  .status-dot{width:8px;height:8px;border-radius:50%;background:var(--success);display:inline-block}
+  .status-dot.indexing{background:var(--text-muted);animation:pulse 1.5s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
 </style>
 </head>
 <body>
-<div class="container">
+<div class="app">
 
-  <!-- 标签栏 -->
-  <div class="tabs">
-    <button class="tab-btn active" data-panel="chat" onclick="switchPanel('chat')">💬 对话</button>
-    <button class="tab-btn" data-panel="exercise" onclick="switchPanel('exercise')">📝 习题</button>
-  </div>
-
-  <!-- 面板容器 -->
-  <div class="panels">
-
-    <!-- ═══ 聊天面板 ═══ -->
-    <div class="panel active" id="panel-chat">
-      <div class="chat-header">
-        <h1>📚 复习资料助手</h1>
-        <p>搜索文档 · 下载 · 生成练习题</p>
+  <!-- ═══ Sidebar ═══ -->
+  <aside class="sidebar">
+    <div class="sidebar-brand"><span>📚</span> Git-house</div>
+    <nav class="sidebar-nav">
+      <button class="active" data-panel="chat" onclick="switchPanel('chat')">
+        <span class="icon">💬</span> 对话
+      </button>
+      <button data-panel="exercise" onclick="switchPanel('exercise')">
+        <span class="icon">📝</span> 习题
+      </button>
+    </nav>
+    <div class="sidebar-footer">
+      <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+        <span class="status-dot" id="statusDot"></span>
+        <span id="statusText" style="font-size:11px;color:var(--text-muted)">连接中...</span>
       </div>
-      <div class="messages" id="messages">
-        <div class="msg bot">
-          <div class="bubble">你好！有什么需要帮忙的吗？<br>例如：<br>• 搜一下微积分的资料<br>• 💡 生成线代填空题</div>
-        </div>
-      </div>
-      <div class="chat-input-area">
-        <input type="text" id="input" placeholder="输入你的问题…" autofocus>
-        <button id="sendBtn">发送</button>
-      </div>
-      <div class="chat-hint">按 Enter 发送 &nbsp;·&nbsp; 回复「生成练习题」试试</div>
+      清华大学无穹书院
     </div>
+  </aside>
 
-    <!-- ═══ 习题面板 ═══ -->
-    <div class="panel" id="panel-exercise">
-      <div class="exercise-area">
-        <div class="exercise-header">
-          <h2 id="ex-title">📝 填空题</h2>
-          <div class="src" id="ex-source"></div>
+  <!-- ═══ Main Content ═══ -->
+  <main class="main">
+
+    <!-- 面板容器 -->
+    <div class="panels">
+
+      <!-- 聊天面板 -->
+      <div class="panel active" id="panel-chat" style="display:flex;flex-direction:column">
+        <div class="chat-header">
+          <h1>📚 复习资料助手 <span></span></h1>
+          <span class="status">搜索 · 下载 · 练习题</span>
         </div>
-        <div class="exercise-body" id="ex-body">
-          <div class="exercise-empty" id="ex-empty">
-            <div class="big-icon">📝</div>
-            <div>在对话中输入「生成练习题」</div>
-            <div style="font-size:12px;color:#ccc;">或直接点击习题标签查看已有题目</div>
+        <div class="messages" id="messages">
+          <div class="msg bot">
+            <div class="bubble">你好！有什么需要帮忙的吗？<br><br>
+            💡 试试这些：<br>
+            • 搜一下微积分的资料<br>
+            • 生成线代填空题<br>
+            • 打包下载概率论资料</div>
           </div>
-          <div id="ex-questions" style="display:none;"></div>
         </div>
-        <div class="exercise-footer" id="ex-footer" style="display:none;">
-          <div class="score" id="ex-score">得分: 0/10</div>
-          <button class="btn-submit" id="ex-submit" onclick="submitExercise()">提交批改</button>
-          <button class="btn-retry" id="ex-retry" onclick="resetExercise()" style="display:none;">重新作答</button>
+        <div class="chat-input-area">
+          <input type="text" id="input" placeholder="输入你的问题…" autofocus>
+          <button id="sendBtn">发送</button>
+        </div>
+        <div class="chat-hint">Enter 发送 &nbsp;·&nbsp; 说「生成练习题」试试</div>
+      </div>
+
+      <!-- 习题面板 -->
+      <div class="panel" id="panel-exercise">
+        <div class="exercise-area">
+          <div class="exercise-header">
+            <h2>📝 <span id="ex-title">填空题</span></h2>
+            <div class="src" id="ex-source"></div>
+          </div>
+          <div class="exercise-body" id="ex-body">
+            <div class="exercise-empty" id="ex-empty">
+              <div class="big-icon">📝</div>
+              <div>在对话中输入「生成练习题」</div>
+            </div>
+            <div id="ex-questions" style="display:none;"></div>
+          </div>
+          <div class="exercise-footer" id="ex-footer" style="display:none;">
+            <div class="score" id="ex-score">得分: 0/10</div>
+            <button class="btn-submit" id="ex-submit" onclick="submitExercise()">提交批改</button>
+            <button class="btn-retry" id="ex-retry" onclick="resetExercise()" style="display:none;">重新作答</button>
+          </div>
         </div>
       </div>
-    </div>
 
-  </div>
+    </div>
+  </main>
 </div>
 
 <script>
-// ═══ 全局状态 ═══
-const messages = document.getElementById('messages');
-const input = document.getElementById('input');
-const sendBtn = document.getElementById('sendBtn');
-
-let ws = null;
-let currentQuestions = [];     // [{id, question, answer}]
-let exerciseMode = false;     // 当前是否在习题模式
+// ═══ State ═══
+const messages=document.getElementById('messages');
+const input=document.getElementById('input');
+const sendBtn=document.getElementById('sendBtn');
+let ws=null;
+let currentQuestions=[];
 
 // ═══ WebSocket ═══
-function connect() {
-  // 检测是否直接双击了 HTML 文件（file:// 协议）
-  if (location.protocol === 'file:') {
-    document.getElementById('messages').innerHTML =
-      '<div class="msg bot"><div class="bubble" style="background:#fff3e0;color:#e65100;">' +
-      '⚠️ 不要直接双击这个文件！<br><br>' +
-      '请按以下步骤操作：<br>' +
-      '1. 在仓库文件夹里找到 <b>start.bat</b><br>' +
-      '2. <b>双击</b> start.bat<br>' +
-      '3. 它会自动启动服务并打开浏览器<br><br>' +
-      '或者手动运行：<br>' +
-      'pip install -r requirements.txt<br>' +
-      'python app.py<br>' +
-      '然后访问 http://127.0.0.1:8000' +
-      '</div></div>';
+function connect(){
+  if(location.protocol==='file:'){
+    document.getElementById('messages').innerHTML=
+      '<div class="msg bot"><div class="bubble" style="background:oklch(92% 0.05 45);color:oklch(40% 0.15 45)">'+
+      '⚠️ 不要直接双击这个文件！<br><br>请运行 <b>start.bat</b> 或 <b>python app.py</b><br>然后访问 http://127.0.0.1:8000</div></div>';
     return;
   }
-
-  const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
-  ws = new WebSocket(`${proto}//${location.host}/ws`);
-  ws.onmessage = (e) => {
-    const data = JSON.parse(e.data);
-    if (data.type === 'exercise') {
-      renderExercise(data);
-      switchPanel('exercise');
-    } else {
-      removeLoading();
-      addMsg('bot', data.reply);
-    }
+  const p=location.protocol==='https:'?'wss:':'ws:';
+  ws=new WebSocket(p+'//'+location.host+'/ws');
+  ws.onmessage=e=>{
+    const d=JSON.parse(e.data);
+    if(d.type==='exercise'){renderExercise(d);switchPanel('exercise')}
+    else{removeLoading();addMsg('bot',d.reply)}
   };
-  ws.onerror = function() {
-    document.getElementById('messages').innerHTML =
-      '<div class="msg bot"><div class="bubble" style="background:#fff3e0;color:#e65100;">' +
-      '⚠️ 无法连接服务器<br><br>' +
-      '请确认已经运行了 <b>start.bat</b> 或 <b>python app.py</b><br>' +
-      '然后刷新本页面。</div></div>';
+  ws.onerror=()=>{
+    document.getElementById('messages').innerHTML=
+      '<div class="msg bot"><div class="bubble" style="background:oklch(92% 0.05 45);color:oklch(40% 0.15 45)">'+
+      '⚠️ 无法连接服务器<br><br>请确认已运行 <b>start.bat</b> 或 <b>python app.py</b><br>然后刷新页面</div></div>';
+    setStatus('offline','离线');
   };
-  ws.onclose = () => setTimeout(connect, 1000);
+  ws.onopen=()=>setStatus('online','运行中');
+  ws.onclose=()=>{setStatus('offline','已断开');setTimeout(connect,2000)};
 }
 connect();
 
-// ═══ 面板切换 ═══
-function switchPanel(name) {
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.panel === name));
-  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + name));
-  if (name === 'chat') input.focus();
+function setStatus(state,label){
+  const dot=document.getElementById('statusDot');
+  const txt=document.getElementById('statusText');
+  dot.className='status-dot'+(state==='online'?'':' indexing');
+  dot.style.background=state==='online'?'var(--success)':'var(--error)';
+  txt.textContent=label;
 }
 
-// ═══ 聊天消息 ═══
-function escapeHtml(str) {
-  const d = document.createElement('div');
-  d.textContent = str;
-  return d.innerHTML;
+// ═══ Panel Switch ═══
+function switchPanel(name){
+  document.querySelectorAll('.sidebar-nav button').forEach(b=>b.classList.toggle('active',b.dataset.panel===name));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active',p.id==='panel-'+name));
+  if(name==='chat')input.focus();
 }
 
-function linkify(text) {
-  let html = escapeHtml(text);
-  html = html.replace(/\[([^\]]+)\]\(\/files\/(.+)\)/g, function(m, t, fp) {
-    return '<a href="/files/' + escapeHtml(fp) + '" download style="display:inline-block;margin:4px 0;padding:6px 14px;background:#1a73e8;color:#fff;border-radius:6px;text-decoration:none;font-size:13px;cursor:pointer;">📥 下载 ' + escapeHtml(t) + '</a>';
+// ═══ Chat ═══
+function escapeHtml(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+function linkify(t){
+  let h=escapeHtml(t);
+  h=h.replace(/\[([^\]]+)\]\(\/files\/(.+)\)/g,(_,t,fp)=>
+    '<a href="/files/'+escapeHtml(fp)+'" download style="display:inline-block;margin:4px 0;padding:6px 14px;background:var(--accent);color:#fff;border-radius:6px;text-decoration:none;font-size:13px">📥 下载 '+escapeHtml(t)+'</a>');
+  h=h.replace(/\/files\/[^\s<"']+/g,m=>{
+    let c=m;const pc=(c.match(/\(/g)||[]).length,cc=(c.match(/\)/g)||[]).length;
+    if(cc>pc)c=c.replace(/\)+$/,'');
+    const fn=c.replace('/files/','').split('/').pop().replace(/^.*[/\\]/,'');
+    return '<a href="'+c+'" download style="display:inline-block;margin:4px 0;padding:6px 14px;background:var(--accent);color:#fff;border-radius:6px;text-decoration:none;font-size:13px">📥 下载 '+escapeHtml(fn)+'</a>';
   });
-  html = html.replace(/\/files\/[^\s<"']+/g, function(match) {
-    var clean = match;
-    var pc = (clean.match(/\(/g)||[]).length;
-    var cc = (clean.match(/\)/g)||[]).length;
-    if (cc > pc) clean = clean.replace(/\)+$/, '');
-    var fn = clean.replace('/files/', '').split('/').pop().replace(/^.*[/\\]/, '');
-    return '<a href="' + clean + '" download style="display:inline-block;margin:4px 0;padding:6px 14px;background:#1a73e8;color:#fff;border-radius:6px;text-decoration:none;font-size:13px;cursor:pointer;">📥 下载 ' + escapeHtml(fn) + '</a>';
-  });
-  return html;
+  return h;
 }
-
-function addMsg(role, text) {
-  const div = document.createElement('div');
-  div.className = 'msg ' + role;
-  const bubble = document.createElement('div');
-  bubble.className = 'bubble';
-  bubble.innerHTML = linkify(text);
-  div.appendChild(bubble);
-  messages.appendChild(div);
-  messages.scrollTop = messages.scrollHeight;
+function addMsg(r,t){
+  const d=document.createElement('div');d.className='msg '+r;
+  const b=document.createElement('div');b.className='bubble';b.innerHTML=linkify(t);
+  d.appendChild(b);messages.appendChild(d);messages.scrollTop=messages.scrollHeight;
 }
-
-function removeLoading() {
-  const l = messages.querySelector('.msg.bot:last-child .bubble.loading');
-  if (l) l.closest('.msg').remove();
+function removeLoading(){const l=messages.querySelector('.msg.bot:last-child .bubble.loading');if(l)l.closest('.msg').remove()}
+function send(){
+  const t=input.value.trim();if(!t)return;
+  input.value='';addMsg('user',t);addMsg('bot','…');sendBtn.disabled=true;
+  if(ws&&ws.readyState===WebSocket.OPEN)ws.send(JSON.stringify({query:t}));
 }
+input.addEventListener('keydown',e=>{if(e.key==='Enter')send()});
+sendBtn.addEventListener('click',send);
 
-function send() {
-  const text = input.value.trim();
-  if (!text) return;
-  input.value = '';
-  addMsg('user', text);
-  addMsg('bot', '…');
-  sendBtn.disabled = true;
-  if (ws && ws.readyState === WebSocket.OPEN) {
-    ws.send(JSON.stringify({ query: text }));
-  }
-}
-
-input.addEventListener('keydown', (e) => { if (e.key === 'Enter') send(); });
-sendBtn.addEventListener('click', send);
-
-// ═══ 习题渲染 ═══
-function renderExercise(data) {
-  currentQuestions = (data.questions || []).map(q => ({
-    id: q.id,
-    question: q.question,
-    answer: q.answer,
-    userAnswer: '',
-    status: null   // null / 'correct' / 'wrong'
-  }));
-
-  document.getElementById('ex-title').textContent = '📝 ' + (data.title || '填空题');
-  document.getElementById('ex-source').textContent = data.source ? '来源: ' + data.source : '';
-  document.getElementById('ex-empty').style.display = 'none';
-  document.getElementById('ex-footer').style.display = 'flex';
-
-  const container = document.getElementById('ex-questions');
-  container.style.display = 'block';
-  container.innerHTML = '';
-
-  currentQuestions.forEach((q, i) => {
-    // 把 ______ 替换为高亮占位
-    const parts = q.question.split('______');
-    let html = '';
-    parts.forEach((part, pi) => {
-      html += escapeHtml(part);
-      if (pi < parts.length - 1) {
-        html += '<span class="blank-highlight" id="blank-' + i + '">______</span>';
-      }
-    });
-
-    const wrap = document.createElement('div');
-    wrap.className = 'eq-wrap';
-    wrap.id = 'eq-' + i;
-    wrap.innerHTML =
-      '<div class="eq-text"><span class="eq-num">' + (i+1) + '</span>' + html + '</div>' +
-      '<div class="eq-answer-row">' +
-        '<input type="text" id="ans-' + i + '" placeholder="输入你的答案…" onkeydown="if(event.key===\'Enter\') submitExercise()">' +
-        '<span class="result-tag" id="result-' + i + '" style="display:none;"></span>' +
-      '</div>';
-    container.appendChild(wrap);
+// ═══ Exercise ═══
+function renderExercise(d){
+  currentQuestions=(d.questions||[]).map(q=>({id:q.id,question:q.question,answer:q.answer,userAnswer:'',status:null}));
+  document.getElementById('ex-title').textContent=d.title||'填空题';
+  document.getElementById('ex-source').textContent=d.source?'来源: '+d.source:'';
+  document.getElementById('ex-empty').style.display='none';
+  document.getElementById('ex-footer').style.display='flex';
+  const c=document.getElementById('ex-questions');c.style.display='block';c.innerHTML='';
+  currentQuestions.forEach((q,i)=>{
+    const parts=q.question.split('______');
+    let html='';
+    parts.forEach((p,pi)=>{html+=escapeHtml(p);if(pi<parts.length-1)html+='<span class="blank-highlight" id="blank-'+i+'">______</span>'});
+    const w=document.createElement('div');w.className='eq-wrap';w.id='eq-'+i;
+    w.innerHTML='<div class="eq-text"><span class="eq-num">'+(i+1)+'</span>'+html+'</div>'+
+      '<div class="eq-answer-row"><input type="text" id="ans-'+i+'" placeholder="输入答案…" onkeydown="if(event.key===\'Enter\')submitExercise()">'+
+      '<span class="result-tag" id="result-'+i+'" style="display:none"></span></div>';
+    c.appendChild(w);
   });
 }
-
-// ═══ 提交批改 ═══
-function submitExercise() {
-  let correct = 0;
-  currentQuestions.forEach((q, i) => {
-    const inputEl = document.getElementById('ans-' + i);
-    const resultEl = document.getElementById('result-' + i);
-    const wrapEl = document.getElementById('eq-' + i);
-    const blankEl = document.getElementById('blank-' + i);
-
-    if (!inputEl || !resultEl) return;
-
-    q.userAnswer = inputEl.value.trim();
-
-    // 判题（模糊匹配：去除空格、全半角）
-    const normalize = (s) => s.replace(/\s+/g, '').replace(/[（(]/g, '(').replace(/[）)]/g, ')').toLowerCase();
-    const isCorrect = normalize(q.userAnswer) === normalize(q.answer);
-
-    q.status = isCorrect ? 'correct' : 'wrong';
-
-    // 样式
-    inputEl.disabled = true;
-    wrapEl.classList.remove('correct', 'wrong');
-    wrapEl.classList.add(isCorrect ? 'correct' : 'wrong');
-
-    resultEl.style.display = 'inline-block';
-    resultEl.className = 'result-tag ' + (isCorrect ? 'correct' : 'wrong');
-    resultEl.textContent = isCorrect ? '✓ 正确' : '✗ 错误';
-
-    // 答案行追加正确答案提示
-    const row = inputEl.parentElement;
-    const existing = row.querySelector('.correct-answer');
-    if (!existing) {
-      const hint = document.createElement('span');
-      hint.className = 'correct-answer';
-      hint.textContent = isCorrect ? '' : '正确答案: ' + q.answer;
-      row.appendChild(hint);
+function submitExercise(){
+  let correct=0;
+  currentQuestions.forEach((q,i)=>{
+    const ie=document.getElementById('ans-'+i),re=document.getElementById('result-'+i),we=document.getElementById('eq-'+i),be=document.getElementById('blank-'+i);
+    if(!ie||!re)return;
+    q.userAnswer=ie.value.trim();
+    const n=s=>s.replace(/\s+/g,'').replace(/[（(]/g,'(').replace(/[）)]/g,')').toLowerCase();
+    const ok=n(q.userAnswer)===n(q.answer);
+    q.status=ok?'correct':'wrong';
+    ie.disabled=true;
+    we.classList.remove('correct','wrong');we.classList.add(ok?'correct':'wrong');
+    re.style.display='inline-block';re.className='result-tag '+(ok?'correct':'wrong');re.textContent=ok?'✓ 正确':'✗ 错误';
+    const row=ie.parentElement;
+    if(!row.querySelector('.correct-answer')){
+      const h=document.createElement('span');h.className='correct-answer';
+      h.textContent=ok?'':'正确答案: '+q.answer;row.appendChild(h);
     }
-
-    // 高亮填空
-    if (blankEl) {
-      blankEl.className = isCorrect ? 'blank-highlight blank-filled' : 'blank-highlight blank-wrong';
-      blankEl.textContent = q.userAnswer || '______';
-    }
-
-    if (isCorrect) correct++;
+    if(be){be.className='blank-highlight '+(ok?'blank-filled':'blank-wrong');be.textContent=q.userAnswer||'______'}
+    if(ok)correct++;
   });
-
-  document.getElementById('ex-score').textContent = '得分: ' + correct + '/' + currentQuestions.length;
-  document.getElementById('ex-submit').disabled = true;
-  document.getElementById('ex-retry').style.display = 'inline-block';
+  document.getElementById('ex-score').textContent='得分: '+correct+'/'+currentQuestions.length;
+  document.getElementById('ex-submit').disabled=true;
+  document.getElementById('ex-retry').style.display='inline-block';
 }
-
-// ═══ 重置 ═══
-function resetExercise() {
-  if (currentQuestions.length === 0) return;
-  currentQuestions.forEach((q, i) => {
-    q.userAnswer = '';
-    q.status = null;
-    const inputEl = document.getElementById('ans-' + i);
-    const resultEl = document.getElementById('result-' + i);
-    const wrapEl = document.getElementById('eq-' + i);
-    const blankEl = document.getElementById('blank-' + i);
-    if (inputEl) { inputEl.disabled = false; inputEl.value = ''; }
-    if (resultEl) { resultEl.style.display = 'none'; }
-    if (wrapEl) { wrapEl.classList.remove('correct', 'wrong'); }
-    if (blankEl) { blankEl.className = 'blank-highlight'; blankEl.textContent = '______'; }
-    // 删除答案提示
-    if (inputEl) {
-      const hint = inputEl.parentElement.querySelector('.correct-answer');
-      if (hint) hint.remove();
-    }
+function resetExercise(){
+  if(!currentQuestions.length)return;
+  currentQuestions.forEach((q,i)=>{
+    q.userAnswer='';q.status=null;
+    const ie=document.getElementById('ans-'+i),re=document.getElementById('result-'+i),we=document.getElementById('eq-'+i),be=document.getElementById('blank-'+i);
+    if(ie){ie.disabled=false;ie.value=''}
+    if(re)re.style.display='none';
+    if(we)we.classList.remove('correct','wrong');
+    if(be){be.className='blank-highlight';be.textContent='______'}
+    if(ie){const h=ie.parentElement.querySelector('.correct-answer');if(h)h.remove()}
   });
-  document.getElementById('ex-score').textContent = '得分: 0/' + currentQuestions.length;
-  document.getElementById('ex-submit').disabled = false;
-  document.getElementById('ex-retry').style.display = 'none';
+  document.getElementById('ex-score').textContent='得分: 0/'+currentQuestions.length;
+  document.getElementById('ex-submit').disabled=false;
+  document.getElementById('ex-retry').style.display='none';
 }
 </script>
 </body>
