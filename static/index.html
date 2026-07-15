@@ -117,6 +117,8 @@
     border-bottom-left-radius:4px;
   }
   .msg.bot .bubble.loading{color:var(--text-muted);font-style:italic}
+  .msg .bubble a[download]{font-weight:600}
+  .msg .bubble a[download]:hover{filter:brightness(1.1)}
   @keyframes fadeSlide{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 
   /* ── Chat Input ── */
@@ -168,14 +170,14 @@
   }
   .eq-num{
     display:inline-flex;width:24px;height:24px;align-items:center;justify-content:center;
-    border-radius:50%;background:var(--accent);color:#fff;font-size:12px;font-weight:600;
+    border-radius:50%;background:var(--accent);color:#fff;font-size:12px;font-weight:700;
     margin-right:8px;vertical-align:middle;flex-shrink:0;
   }
   .eq-text{font-size:14px;line-height:1.7;color:var(--text)}
   .eq-text .blank-highlight{
     display:inline-block;min-width:80px;
     border-bottom:2px dashed var(--accent);color:var(--accent);
-    font-weight:600;text-align:center;padding:0 4px;
+    font-weight:700;text-align:center;padding:0 4px;
   }
   .eq-text .blank-filled{border-bottom-color:var(--success);color:var(--success)}
   .eq-text .blank-wrong{border-bottom-color:var(--error);color:var(--error)}
@@ -187,7 +189,7 @@
   }
   .eq-answer-row input:focus{border-color:var(--accent)}
   .eq-answer-row input:disabled{opacity:.5}
-  .eq-answer-row .result-tag{font-size:13px;font-weight:500;white-space:nowrap;padding:4px 10px;border-radius:6px}
+  .eq-answer-row .result-tag{font-size:13px;font-weight:700;white-space:nowrap;padding:4px 10px;border-radius:6px}
   .eq-answer-row .result-tag.correct{color:var(--success);background:oklch(95% 0.03 145)}
   .eq-answer-row .result-tag.wrong{color:var(--error);background:oklch(95% 0.03 25)}
   .eq-answer-row .correct-answer{font-size:12px;color:var(--text-muted);margin-left:4px}
@@ -196,7 +198,7 @@
     padding:14px 24px 18px;border-top:1px solid var(--border);
     display:flex;gap:12px;align-items:center;flex-shrink:0;
   }
-  .exercise-footer .score{font-size:15px;font-weight:600;color:var(--accent);min-width:80px}
+  .exercise-footer .score{font-size:16px;font-weight:700;color:var(--accent);min-width:80px}
   .exercise-footer button{
     padding:9px 20px;border:none;border-radius:var(--radius-sm);
     font-size:13px;cursor:pointer;transition:all .15s;
