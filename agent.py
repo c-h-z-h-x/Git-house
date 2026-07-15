@@ -40,6 +40,8 @@ def search_docs(query: str) -> str:
         for i, r in enumerate(results, 1):
             lines.append(f"{i}. {r['path']}")
             lines.append(f"   匹配度: {r['score']:.3f}  |  方式: {r.get('method', 'hybrid')}")
+        lines.append("")
+        lines.append("💡 如需下载这些文件，回复「打包 + 关键词」即可")
         return "\n".join(lines)
     except Exception as e:
         return f"搜索失败: {e}"
@@ -136,8 +138,10 @@ def main():
     # langgraph 带记忆的 Agent
     memory = MemorySaver()
     system_prompt = (
-        "你是一个AI复习资料提供助手，请用简洁明了的语句为用户解答疑惑，不需要丰富的感情，"
-        "如果不清楚答案请直接回答不知道。"
+        "你是一个AI复习资料提供助手。请用简洁明了的语句为用户解答疑惑。\n"
+        "你可以使用 search_docs 搜索文档，用 pack_docs 打包文档供用户下载。\n"
+        "当用户找到想要的资料时，主动询问是否需要打包下载。\n"
+        "如果不清楚答案请直接回答不知道，不需要丰富的感情。"
     )
     agent = create_agent(
         model=llm,

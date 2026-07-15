@@ -54,6 +54,8 @@ def search_docs(query: str) -> str:
         for i, r in enumerate(results, 1):
             lines.append(f"{i}. {r['path']}")
             lines.append(f"   匹配度: {r['score']:.3f}")
+        lines.append("")
+        lines.append("💡 如需下载这些文件，回复「打包 + 关键词」即可")
         return "\n".join(lines)
     except Exception as e:
         return f"搜索失败: {e}"
@@ -115,8 +117,10 @@ def get_agent():
         )
         tools = [search_docs, pack_docs, current_time]
         system_prompt = (
-            "你是一个AI复习资料提供助手，请用简洁明了的语句为用户解答疑惑，"
-            "不需要丰富的感情，如果不清楚答案请直接回答不知道。"
+            "你是一个AI复习资料提供助手。请用简洁明了的语句为用户解答疑惑。\n"
+            "你可以使用 search_docs 搜索文档，用 pack_docs 打包文档供用户下载。\n"
+            "当用户找到想要的资料时，主动询问是否需要打包下载。\n"
+            "如果不清楚答案请直接回答不知道，不需要丰富的感情。"
         )
         memory = MemorySaver()
         agent = create_agent(
@@ -156,16 +160,19 @@ app.mount("/static", StaticFiles(directory=static_dir), name="static")
 
 @app.get("/download/{filename}")
 async def download_file(filename: str):
-    """提供 ZIP 文件下载"""
-    file_path = os.path.join(DOWNLOAD_DIR, filename)
+    """提供 ZIP 文件下载（防路径穿越）"""
+    import posixpath
+    # 只取文件名部分，杜绝 ../../ 路径穿越
+    safe_name = posixpath.basename(filename)
+    file_path = os.path.join(DOWNLOAD_DIR, safe_name)
     if not os.path.exists(file_path):
         from fastapi.responses import JSONResponse
         return JSONResponse({"error": "文件不存在或已过期"}, status_code=404)
     return FileResponse(
         path=file_path,
-        filename=filename,
+        filename=safe_name,
         media_type="application/zip",
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        headers={"Content-Disposition": f'attachment; filename="{safe_name}"'},
     )
 
 @app.get("/")
