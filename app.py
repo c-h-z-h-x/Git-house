@@ -11,7 +11,8 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 
-os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
+if os.name == "nt":
+    os.environ["KMP_DUPLICATE_LIB_OK"] = "TRUE"
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from config import LLM_CONFIG
