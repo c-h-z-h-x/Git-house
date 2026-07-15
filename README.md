@@ -44,7 +44,7 @@ cd Git-house
 5. 在仓库文件夹中找到 `.env.example` 文件
 6. **复制一份并重命名为 `.env`**
 7. 用记事本打开 `.env`，把 `DASHSCOPE_API_KEY=***` 里的 `***` 换成你刚申请的 Key
-8*. **关于工作空间地址**：如果你申请的是普通 API Key（`sk-` 开头），`.env` 里**不需要**填 `BAILIAN_BASE_URL`，系统自动使用公共地址。只有工作空间专用 Key（`sk-ws-` 开头）才需要填写对应的 `BAILIAN_BASE_URL`。
+8. **关于工作空间地址**：如果你申请的是普通 API Key（`sk-` 开头），`.env` 里**不需要**填 `BAILIAN_BASE_URL`，系统自动使用公共地址。只有工作空间专用 Key（`sk-ws-` 开头）才需要填写对应的 `BAILIAN_BASE_URL`。
 
 ### 第 3 步：安装依赖
 
