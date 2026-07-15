@@ -216,8 +216,8 @@
     display:flex;gap:12px;align-items:center;flex-shrink:0;flex-wrap:wrap;
   }
   .exercise-footer .score{font-size:15px;font-weight:700;color:var(--sage);min-width:80px}
-  .exercise-footer button{
-    padding:9px 20px;border:none;border-radius:var(--radius-sm);
+  .exercise-footer .ex-answer-btn{
+    padding:9px 20px;border-radius:var(--radius-sm);
     font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;
   }
   .btn-submit{background:var(--sage);color:#fff;box-shadow:var(--shadow-sm)}
@@ -232,11 +232,11 @@
   .exercise-empty svg{width:48px;height:48px;opacity:.25;color:var(--umber)}
 
   /* ── Card Slide ── */
-  .ex-card-slide{flex:1;display:flex;align-items:center;justify-content:center;padding:8px;overflow:hidden}
+  .ex-card-slide{flex:1;display:flex;align-items:center;justify-content:center;padding:16px 8px;overflow:hidden}
   .ex-card{
-    width:100%;max-width:520px;min-height:180px;
+    width:100%;max-width:600px;min-height:240px;
     background:var(--cream-light);border:1px solid var(--border);
-    border-radius:var(--radius);padding:28px 24px;
+    border-radius:var(--radius);padding:36px 32px;
     box-shadow:var(--shadow-sm);
     transition:transform .35s cubic-bezier(.22,.61,.36,1),opacity .35s ease;
   }
@@ -267,13 +267,13 @@
   }
   .ex-nav{display:flex;align-items:center;gap:12px}
   .ex-arrow{
-    width:40px;height:40px;display:flex;align-items:center;justify-content:center;
-    border:1px solid var(--border);border-radius:50%;background:var(--surface);
+    width:44px;height:44px;display:flex;align-items:center;justify-content:center;
+    border:2px solid var(--border);border-radius:50%;background:var(--surface);
     cursor:pointer;transition:all .15s;color:var(--text-secondary);
   }
   .ex-arrow:hover{background:var(--cream-light);color:var(--sage);border-color:var(--sage)}
   .ex-arrow:active{transform:scale(.93)}
-  .ex-arrow svg{width:20px;height:20px}
+  .ex-arrow svg{width:22px;height:22px}
   .ex-arrow:disabled{opacity:.3;cursor:not-allowed;pointer-events:none}
   .ex-progress{font-size:14px;font-weight:600;color:var(--text-secondary);min-width:50px;text-align:center}
   .ex-answer-btn{
