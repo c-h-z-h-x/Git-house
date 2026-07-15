@@ -35,7 +35,7 @@
     font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Noto Sans SC","Microsoft YaHei",system-ui,sans-serif;
     background:var(--sage);
     color:var(--text);
-    height:100dvh;overflow:hidden;font-size:14px;line-height:1.6;
+    height:100dvh;overflow:hidden;font-size:15px;line-height:1.7;
     -webkit-font-smoothing:antialiased;
   }
   svg{fill:currentColor;flex-shrink:0}
@@ -109,8 +109,8 @@
   .msg.user{justify-content:flex-end}
   .msg.bot{justify-content:flex-start}
   .bubble{
-    max-width:72%;padding:12px 18px;border-radius:var(--radius);
-    font-size:14px;line-height:1.7;white-space:pre-wrap;word-break:break-word;
+    max-width:72%;padding:14px 20px;border-radius:var(--radius);
+    font-size:15px;line-height:1.8;white-space:pre-wrap;word-break:break-word;
     animation:in .25s ease-out;
   }
   .msg.user .bubble{
@@ -132,18 +132,18 @@
     display:flex;gap:8px;flex-shrink:0;
   }
   .chat-input-area input{
-    flex:1;padding:10px 16px;
+    flex:1;padding:12px 16px;
     border:1px solid var(--border);border-radius:var(--radius-sm);
-    font-size:14px;outline:none;transition:border .2s,box-shadow .2s;
+    font-size:15px;outline:none;transition:border .2s,box-shadow .2s;
     background:var(--surface);color:var(--text);
   }
   .chat-input-area input:focus{border-color:var(--sage);box-shadow:0 0 0 3px color-mix(in oklch,var(--sage) 15%,transparent)}
   .chat-input-area input::placeholder{color:var(--text-muted)}
   .chat-input-area button{
-    padding:10px 24px;
+    padding:12px 28px;
     background:var(--sage);color:#fff;
     border:none;border-radius:var(--radius-sm);
-    font-size:14px;font-weight:500;cursor:pointer;
+    font-size:15px;font-weight:500;cursor:pointer;
     transition:background .2s,transform .1s;
   }
   .chat-input-area button:hover{background:var(--sage-dark)}
@@ -184,7 +184,7 @@
     border-radius:50%;background:var(--sage);color:#fff;
     font-size:12px;font-weight:700;margin-right:10px;vertical-align:middle;flex-shrink:0;
   }
-  .eq-text{font-size:14px;line-height:1.7;color:var(--text)}
+  .eq-text{font-size:15px;line-height:1.8;color:var(--text)}
   .eq-text .blank-highlight{
     display:inline-block;min-width:80px;
     border-bottom:2px dashed var(--sage);color:var(--sage);
@@ -194,8 +194,8 @@
   .eq-text .blank-wrong{border-bottom-color:var(--error);color:var(--error)}
   .eq-answer-row{display:flex;gap:8px;margin-top:10px;align-items:center;flex-wrap:wrap}
   .eq-answer-row input{
-    flex:1;min-width:120px;padding:8px 12px;border:1px solid var(--border);
-    border-radius:6px;font-size:13px;outline:none;transition:border .2s,box-shadow .2s;
+    flex:1;min-width:120px;padding:10px 12px;border:1px solid var(--border);
+    border-radius:6px;font-size:14px;outline:none;transition:border .2s,box-shadow .2s;
     background:var(--surface);color:var(--text);
   }
   .eq-answer-row input:focus{border-color:var(--sage);box-shadow:0 0 0 3px color-mix(in oklch,var(--sage) 12%,transparent)}
