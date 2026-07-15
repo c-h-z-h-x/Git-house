@@ -230,6 +230,59 @@
     color:var(--text-muted);gap:12px;font-size:14px;
   }
   .exercise-empty svg{width:48px;height:48px;opacity:.25;color:var(--umber)}
+
+  /* ── Card Slide ── */
+  .ex-card-slide{flex:1;display:flex;align-items:center;justify-content:center;padding:8px;overflow:hidden}
+  .ex-card{
+    width:100%;max-width:520px;min-height:180px;
+    background:var(--cream-light);border:1px solid var(--border);
+    border-radius:var(--radius);padding:28px 24px;
+    box-shadow:var(--shadow-sm);
+    transition:transform .35s cubic-bezier(.22,.61,.36,1),opacity .35s ease;
+  }
+  .ex-card.slide-left{transform:translateX(-40px);opacity:0}
+  .ex-card.slide-right{transform:translateX(40px);opacity:0}
+
+  /* ── Card Content ── */
+  .ex-card .eq-num{margin-bottom:12px}
+  .ex-card .eq-text{font-size:16px;line-height:1.8;color:var(--text)}
+  .ex-card .blank-highlight{
+    display:inline-block;min-width:80px;
+    border-bottom:2px dashed var(--sage);color:var(--sage);
+    font-weight:700;text-align:center;padding:0 6px;
+  }
+  .ex-card .ex-answer{
+    margin-top:20px;padding:14px 16px;
+    background:color-mix(in oklch,var(--sage) 8%,transparent);
+    border-radius:var(--radius-sm);font-size:14px;line-height:1.6;
+    display:none;color:var(--text-secondary);
+  }
+  .ex-card .ex-answer.show{display:block;animation:in .2s ease}
+  .ex-card .ex-answer strong{color:var(--sage);font-weight:600}
+
+  /* ── Nav ── */
+  .exercise-footer{
+    padding:14px 24px 18px;border-top:1px solid var(--border);
+    display:flex;align-items:center;justify-content:space-between;flex-shrink:0;gap:12px;
+  }
+  .ex-nav{display:flex;align-items:center;gap:12px}
+  .ex-arrow{
+    width:40px;height:40px;display:flex;align-items:center;justify-content:center;
+    border:1px solid var(--border);border-radius:50%;background:var(--surface);
+    cursor:pointer;transition:all .15s;color:var(--text-secondary);
+  }
+  .ex-arrow:hover{background:var(--cream-light);color:var(--sage);border-color:var(--sage)}
+  .ex-arrow:active{transform:scale(.93)}
+  .ex-arrow svg{width:20px;height:20px}
+  .ex-arrow:disabled{opacity:.3;cursor:not-allowed;pointer-events:none}
+  .ex-progress{font-size:14px;font-weight:600;color:var(--text-secondary);min-width:50px;text-align:center}
+  .ex-answer-btn{
+    padding:8px 20px;border:1px solid var(--sage);border-radius:var(--radius-sm);
+    background:transparent;color:var(--sage);font-size:13px;font-weight:500;
+    cursor:pointer;transition:all .15s;
+  }
+  .ex-answer-btn:hover{background:var(--sage);color:#fff}
+  .ex-answer-btn.revealed{background:var(--sage);color:#fff}
 </style>
 </head>
 <body>
@@ -303,12 +356,23 @@
               <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
               <div>在对话中输入「生成练习题」</div>
             </div>
-            <div id="ex-questions" style="display:none;"></div>
+            <div id="ex-questions" style="display:none;">
+              <div class="ex-card-slide" id="ex-card-wrap">
+                <div class="ex-card" id="ex-card"></div>
+              </div>
+            </div>
           </div>
           <div class="exercise-footer" id="ex-footer" style="display:none;">
-            <div class="score" id="ex-score">得分: 0/10</div>
-            <button class="btn-submit" id="ex-submit">提交批改</button>
-            <button class="btn-retry" id="ex-retry" style="display:none;">重新作答</button>
+            <div class="ex-nav">
+              <button class="ex-arrow" id="ex-prev" onclick="prevQuestion()">
+                <svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+              <span class="ex-progress" id="ex-progress">1 / 10</span>
+              <button class="ex-arrow" id="ex-next" onclick="nextQuestion()">
+                <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+            </div>
+            <button class="ex-answer-btn" id="ex-answer-btn" onclick="toggleAnswer()">显示答案</button>
           </div>
         </div>
       </div>
@@ -405,71 +469,93 @@ function send(){
 input.addEventListener('keydown',e=>{if(e.key==='Enter')send()});
 sendBtn.addEventListener('click',send);
 
-// Exercise
+// ═══ Exercise: Card-based with slide nav ═══
+let currentQuestions=[];
+let exIndex=0;
+
 function renderExercise(d){
-  currentQuestions=(d.questions||[]).map(q=>({id:q.id,question:q.question,answer:q.answer,userAnswer:'',status:null}));
+  currentQuestions=(d.questions||[]).map(q=>({id:q.id,question:q.question,answer:q.answer}));
+  exIndex=0;
   document.getElementById('ex-title').textContent=d.title||'填空题';
   document.getElementById('ex-source').textContent=d.source?'来源: '+d.source:'';
   document.getElementById('ex-empty').style.display='none';
+  document.getElementById('ex-questions').style.display='block';
   document.getElementById('ex-footer').style.display='flex';
-  const c=document.getElementById('ex-questions');c.style.display='block';c.innerHTML='';
-  currentQuestions.forEach((q,i)=>{
-    const parts=q.question.split('______');
-    let html='';
-    parts.forEach((p,pi)=>{html+=escapeHtml(p);if(pi<parts.length-1)html+='<span class="blank-highlight" id="blank-'+i+'">______</span>'});
-    const w=document.createElement('div');w.className='eq-wrap';w.id='eq-'+i;
-    w.innerHTML='<div class="eq-text"><span class="eq-num">'+(i+1)+'</span>'+html+'</div>'+
-      '<div class="eq-answer-row"><input type="text" id="ans-'+i+'" placeholder="输入答案…" onkeydown="if(event.key===\'Enter\')submitExercise()">'+
-      '<span class="result-tag" id="result-'+i+'" style="display:none"></span></div>';
-    c.appendChild(w);
-  });
+  document.getElementById('ex-answer-btn').className='ex-answer-btn';
+  document.getElementById('ex-answer-btn').textContent='显示答案';
+  renderCard();
 }
 
-function resultIcon(ok){
-  return ok
-    ? '<svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>'
-    : '<svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
-}
-
-function submitExercise(){
-  let correct=0;
-  currentQuestions.forEach((q,i)=>{
-    const ie=document.getElementById('ans-'+i),re=document.getElementById('result-'+i),we=document.getElementById('eq-'+i),be=document.getElementById('blank-'+i);
-    if(!ie||!re)return;
-    q.userAnswer=ie.value.trim();
-    const n=s=>s.replace(/\s+/g,'').replace(/[（(]/g,'(').replace(/[）)]/g,')').toLowerCase();
-    const ok=n(q.userAnswer)===n(q.answer);
-    q.status=ok?'correct':'wrong';
-    ie.disabled=true;
-    we.classList.remove('correct','wrong');we.classList.add(ok?'correct':'wrong');
-    re.style.display='inline-flex';re.className='result-tag '+(ok?'correct':'wrong');
-    re.innerHTML=resultIcon(ok)+(ok?'正确':'错误');
-    const row=ie.parentElement;
-    if(!row.querySelector('.correct-answer')){
-      const h=document.createElement('span');h.className='correct-answer';
-      h.textContent=ok?'':'正确答案: '+q.answer;row.appendChild(h);
-    }
-    if(be){be.className='blank-highlight '+(ok?'blank-filled':'blank-wrong');be.textContent=q.userAnswer||'______'}
-    if(ok)correct++;
-  });
-  document.getElementById('ex-score').textContent='得分: '+correct+'/'+currentQuestions.length;
-  document.getElementById('ex-submit').disabled=true;
-  document.getElementById('ex-retry').style.display='inline-block';
-}
-function resetExercise(){
+function renderCard(slideDir){
   if(!currentQuestions.length)return;
-  currentQuestions.forEach((q,i)=>{
-    q.userAnswer='';q.status=null;
-    const ie=document.getElementById('ans-'+i),re=document.getElementById('result-'+i),we=document.getElementById('eq-'+i),be=document.getElementById('blank-'+i);
-    if(ie){ie.disabled=false;ie.value=''}
-    if(re)re.style.display='none';
-    if(we)we.classList.remove('correct','wrong');
-    if(be){be.className='blank-highlight';be.textContent='______'}
-    if(ie){const h=ie.parentElement.querySelector('.correct-answer');if(h)h.remove()}
+  const q=currentQuestions[exIndex];
+  const card=document.getElementById('ex-card');
+  const total=currentQuestions.length;
+
+  // Split on ______ to highlight blanks
+  const parts=q.question.split('______');
+  let textHtml='';
+  parts.forEach((p,i)=>{
+    textHtml+=escapeHtml(p);
+    if(i<parts.length-1)textHtml+='<span class="blank-highlight">______</span>';
   });
-  document.getElementById('ex-score').textContent='得分: 0/'+currentQuestions.length;
-  document.getElementById('ex-submit').disabled=false;
-  document.getElementById('ex-retry').style.display='none';
+
+  // Build card HTML
+  card.innerHTML=
+    '<div class="ex-card-inner">'+
+      '<div class="eq-text"><span class="eq-num">'+(exIndex+1)+'</span>'+textHtml+'</div>'+
+      '<div class="ex-answer" id="ex-answer-box">'+
+        '<strong>答案：</strong>'+escapeHtml(q.answer)+
+      '</div>'+
+    '</div>';
+
+  // Reset answer visibility
+  document.getElementById('ex-answer-box').classList.remove('show');
+  document.getElementById('ex-answer-btn').className='ex-answer-btn';
+  document.getElementById('ex-answer-btn').textContent='显示答案';
+
+  // Progress
+  document.getElementById('ex-progress').textContent=(exIndex+1)+' / '+total;
+
+  // Arrow states
+  document.getElementById('ex-prev').disabled=(exIndex===0);
+  document.getElementById('ex-next').disabled=(exIndex===total-1);
+
+  // KaTeX re-render
+  if(typeof renderMathInElement==='function'){
+    renderMathInElement(card,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false},{left:'\\(',right:'\\)',display:false}]});
+  }
+}
+
+function nextQuestion(){
+  if(exIndex>=currentQuestions.length-1)return;
+  const card=document.getElementById('ex-card');
+  card.classList.add('slide-left');
+  setTimeout(()=>{
+    card.classList.remove('slide-left');
+    exIndex++;
+    renderCard();
+  },200);
+}
+
+function prevQuestion(){
+  if(exIndex<=0)return;
+  const card=document.getElementById('ex-card');
+  card.classList.add('slide-right');
+  setTimeout(()=>{
+    card.classList.remove('slide-right');
+    exIndex--;
+    renderCard();
+  },200);
+}
+
+function toggleAnswer(){
+  const box=document.getElementById('ex-answer-box');
+  const btn=document.getElementById('ex-answer-btn');
+  const show=!box.classList.contains('show');
+  box.classList.toggle('show',show);
+  btn.textContent=show?'隐藏答案':'显示答案';
+  btn.classList.toggle('revealed',show);
 }
 </script>
 </body>
