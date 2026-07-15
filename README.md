@@ -57,7 +57,7 @@ pip install -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
 
 ### 第 4 步：启动服务
 
-在终端中输入：
+每次使用时，需要在终端中输入：
 
 ```bash
 python app.py
