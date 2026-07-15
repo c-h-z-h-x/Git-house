@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>复习资料助手 · Git-house</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css">
 <style>
   /* ── Reset & Theme ── */
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -316,6 +317,8 @@
   </main>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
 <script>
 const messages=document.getElementById('messages');
 const input=document.getElementById('input');
@@ -335,8 +338,12 @@ function connect(){
   ws=new WebSocket(p+'//'+location.host+'/ws');
   ws.onmessage=e=>{
     const d=JSON.parse(e.data);
-    if(d.type==='exercise'){renderExercise(d);switchPanel('exercise')}
-    else{removeLoading();addMsg('bot',d.reply)}
+    if(d.type==='exercise'){
+      removeLoading();
+      if(d.reply)addMsg('bot',d.reply);
+      renderExercise(d);
+      switchPanel('exercise')
+    }else{removeLoading();addMsg('bot',d.reply)}
   };
   ws.onerror=()=>{
     document.getElementById('messages').innerHTML=
@@ -385,6 +392,9 @@ function addMsg(r,t){
   const d=document.createElement('div');d.className='msg '+r;
   const b=document.createElement('div');b.className='bubble';b.innerHTML=linkify(t);
   d.appendChild(b);messages.appendChild(d);messages.scrollTop=messages.scrollHeight;
+  if(typeof renderMathInElement==='function'){
+    renderMathInElement(b,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false},{left:'\\(',right:'\\)',display:false}]});
+  }
 }
 function removeLoading(){const l=messages.querySelector('.msg.bot:last-child .bubble.loading');if(l)l.closest('.msg').remove()}
 function send(){
