@@ -1,4 +1,5 @@
 @echo off
+chcp 65001 >nul
 cd /d "%~dp0"
 echo.
 echo  === 复习资料助手 — 一键启动 ===
