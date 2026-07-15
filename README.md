@@ -25,7 +25,7 @@
 | 项目 | 说明 | 获取方式 |
 |------|------|----------|
 | 一台电脑 | Windows / macOS / Linux 均可 | 你正在用的这台 |
-| Python | 版本 3.9 或更高 | [python.org](https://www.python.org/downloads/) |
+| Python | 版本 3.9 或更高（最好是3.13以上） | [python.org](https://www.python.org/downloads/) |
 | API Key | 让 AI 工作的钥匙，免费申请 | 见下方说明 |
 
 ### 第 1 步：获取代码
