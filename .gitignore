@@ -1,21 +1,16 @@
-﻿# Python
+# Python
 __pycache__/
 *.pyc
 .env
 venv/
 .venv/
 
-test_rag*.py
-
-# Server logs
-server_*.log
-
-# Downloaded zip files
-downloads/
-
-# Server logs
-server_*.log
-
-# Temporary test scripts
-verify*.py
+# Test scripts
 test_*.py
+verify*.py
+
+# Server logs
+server_*.log
+
+# Downloads
+downloads/

@@ -361,19 +361,41 @@ let exerciseMode = false;     // 当前是否在习题模式
 
 // ═══ WebSocket ═══
 function connect() {
+  // 检测是否直接双击了 HTML 文件（file:// 协议）
+  if (location.protocol === 'file:') {
+    document.getElementById('messages').innerHTML =
+      '<div class="msg bot"><div class="bubble" style="background:#fff3e0;color:#e65100;">' +
+      '⚠️ 不要直接双击这个文件！<br><br>' +
+      '请按以下步骤操作：<br>' +
+      '1. 在仓库文件夹里找到 <b>start.bat</b><br>' +
+      '2. <b>双击</b> start.bat<br>' +
+      '3. 它会自动启动服务并打开浏览器<br><br>' +
+      '或者手动运行：<br>' +
+      'pip install -r requirements.txt<br>' +
+      'python app.py<br>' +
+      '然后访问 http://127.0.0.1:8000' +
+      '</div></div>';
+    return;
+  }
+
   const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
   ws = new WebSocket(`${proto}//${location.host}/ws`);
   ws.onmessage = (e) => {
     const data = JSON.parse(e.data);
     if (data.type === 'exercise') {
-      // 收到习题数据 → 渲染并切到习题面板
       renderExercise(data);
       switchPanel('exercise');
     } else {
-      // 普通回复
       removeLoading();
       addMsg('bot', data.reply);
     }
+  };
+  ws.onerror = function() {
+    document.getElementById('messages').innerHTML =
+      '<div class="msg bot"><div class="bubble" style="background:#fff3e0;color:#e65100;">' +
+      '⚠️ 无法连接服务器<br><br>' +
+      '请确认已经运行了 <b>start.bat</b> 或 <b>python app.py</b><br>' +
+      '然后刷新本页面。</div></div>';
   };
   ws.onclose = () => setTimeout(connect, 1000);
 }
