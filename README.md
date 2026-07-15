@@ -10,19 +10,25 @@
 
 ---
 
-## 🚀 快速启动
+## 🚀 一键启动
+
+**Windows 用户：** 双击仓库根目录的 [**`start.bat`**](start.bat) 即可自动完成全部步骤 👇
+
+> 1. 检测 Python 环境  ✓
+> 2. 自动安装依赖     ✓
+> 3. 启动 Web 服务     ✓
+> 4. 打开浏览器        ✓
+
+[![启动](https://img.shields.io/badge/🚀-双击_start.bat_启动-blue?style=for-the-badge)](start.bat)
+
+### 手动启动（备选）
 
 ```bash
-# 安装依赖
 pip install -r requirements.txt
-
-# 启动 Web 服务
 python app.py
 ```
 
-打开浏览器访问：
-
-👉 **http://127.0.0.1:8000**
+然后浏览器访问 👉 **http://127.0.0.1:8000**
 
 ## ✨ 功能
 
