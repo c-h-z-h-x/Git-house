@@ -77,9 +77,12 @@ def pack_docs(query: str) -> str:
             if r["path"] not in seen:
                 seen.add(r["path"])
                 files.append(r["path"])
+        # 生成可读文件名（isalnum() 在 Python3 中自动包含中文）
         safe = "".join(c if c.isalnum() or c in "-_ " else "_" for c in query)[:20].strip()
+        if not safe:
+            safe = "docs"
         unique_id = uuid.uuid4().hex[:8]
-        filename = f"{safe or 'docs'}_{unique_id}.zip"
+        filename = f"{safe}_{unique_id}.zip"
         zip_path = os.path.join(DOWNLOAD_DIR, filename)
         with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
             for f in files:

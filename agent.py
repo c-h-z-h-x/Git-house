@@ -73,9 +73,12 @@ def pack_docs(query: str) -> str:
                 files.append(r["path"])
 
         # 创建 zip（保存到统一下载目录）
-        safe_name = "".join(c if c.isalnum() or c in "-_ " else "_" for c in query)[:20].strip()
+        # 文件名仅保留 ASCII 字母数字，防止中文导致链接异常
+        safe_name = "".join(c if c.isascii() and (c.isalnum() or c in "-_ ") else "_" for c in query)[:20].strip().strip("_")
+        if not safe_name:
+            safe_name = "docs"
         unique_id = uuid.uuid4().hex[:8]
-        filename = f"{safe_name or 'docs'}_{unique_id}.zip"
+        filename = f"{safe_name}_{unique_id}.zip"
         zip_path = os.path.join(DOWNLOAD_DIR, filename)
 
         with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:

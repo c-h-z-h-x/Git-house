@@ -144,8 +144,8 @@ function escapeHtml(str) {
 
 function linkify(text) {
   let html = escapeHtml(text);
-  // 把 /download/xxx.zip 转为可点击的下载按钮（同源请求，直接用 download 属性）
-  html = html.replace(/\/download\/[\w.-]+/g, function(match) {
+  // 把 /download/xxx.zip 转为可点击的下载按钮（匹配任意非空白字符路径）
+  html = html.replace(/\/download\/[^\s<"']+/g, function(match) {
     const filename = match.replace('/download/', '');
     return `<a href="${match}" download style="display:inline-block;margin:4px 0;padding:6px 14px;background:#1a73e8;color:#fff;border-radius:6px;text-decoration:none;font-size:13px;cursor:pointer;">📥 下载 ${escapeHtml(filename)}</a>`;
   });
