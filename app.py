@@ -83,27 +83,25 @@ def generate_exercises(subject: str) -> str:
         if not all_text.strip():
             return "找到文档但无法提取文字内容。"
 
-        # 3) 用 LLM 生成填空题
+        # 3) 用 LLM 基于试卷知识点出概念填空题
         cfg = LLM_CONFIG.get("qwen", LLM_CONFIG["dashscope"])
         client = OpenAI(api_key=cfg["api_key"], base_url=cfg.get("base_url"))
 
         sys_prompt = (
-            "你是一个出题助手。根据提供的复习资料内容，生成 10 道填空题。\n"
+            "你是一个出题助手。根据以下复习资料（期中/期末试卷），制作 10 道概念填空题。\n"
             "要求：\n"
-            "1. 每道题都用 ______ 表示填空位置\n"
-            "2. 每道题必须有明确的答案\n"
-            "3. 题目覆盖不同知识点，避免重复\n"
-            "4. 难度适中，考察核心概念和公式\n"
-            "5. 用 JSON 格式输出，不要额外说明\n\n"
-            '格式示例：\n'
-            '{"title": "线性代数 填空题", "source": "文档名", '
-            '"questions": [\n'
-            '  {"id": 1, "question": "行列式的定义是 ______", "answer": "答案"},\n'
-            '  ...\n'
-            ']}'
+            "1. 题目围绕试卷中出现的核心概念、定义、公式、定理\n"
+            "2. 每道题挖掉一个关键术语/数值/结论，用 ______ 表示\n"
+            "3. 答案必须明确、唯一\n"
+            "4. 覆盖不同知识点，避免重复\n"
+            "5. 每条加上 source 字段标明参考自哪份试卷\n"
+            "6. 用 JSON 输出，不要额外说明\n\n"
+            '输出格式：\n'
+            '{"title": "线性代数 概念填空题", "source": "参考来源", '
+            '"questions": [{"id": 1, "question": "...______...", "answer": "..."}, ...]}'
         )
 
-        user_prompt = f"资料内容：\n{all_text[:6000]}\n\n请基于以上资料生成 10 道填空题。"
+        user_prompt = f"请基于以下试卷内容，出 10 道概念填空题：\n\n{all_text[:6000]}"
 
         resp = client.chat.completions.create(
             model=cfg["model"],
@@ -111,12 +109,11 @@ def generate_exercises(subject: str) -> str:
                 {"role": "system", "content": sys_prompt},
                 {"role": "user", "content": user_prompt},
             ],
-            temperature=0.7,
+            temperature=0.5,
             response_format={"type": "json_object"},
         )
 
         result_text = resp.choices[0].message.content.strip()
-        # 尝试解析 JSON 验证
         parsed = json.loads(result_text)
         if "questions" not in parsed or len(parsed["questions"]) < 1:
             raise ValueError("生成的填空题格式异常")
@@ -255,29 +252,29 @@ async def api_exercises(data: dict):
         cfg = LLM_CONFIG.get("qwen", LLM_CONFIG["dashscope"])
         client = OpenAI(api_key=cfg["api_key"], base_url=cfg.get("base_url"))
 
+        # 3) 基于试卷内容出概念填空题
         sys_prompt = (
-            "你是一个出题助手。根据提供的复习资料内容，生成 10 道填空题。\n"
+            "你是一个出题助手。根据以下复习资料（期中/期末试卷），制作 10 道概念填空题。\n"
             "要求：\n"
-            "1. 每道题都用 ______ 表示填空位置\n"
-            "2. 每道题必须有明确的答案\n"
-            "3. 题目覆盖不同知识点，避免重复\n"
-            "4. 难度适中，考察核心概念和公式\n"
-            "5. 用 JSON 格式输出，不要额外说明\n\n"
-            '格式示例：\n'
-            '{"title": "线性代数 填空题", "source": "文档名", '
-            '"questions": [\n'
-            '  {"id": 1, "question": "行列式的定义是 ______", "answer": "答案"},\n'
-            '  ...\n'
-            ']}'
+            "1. 题目围绕试卷中出现的核心概念、定义、公式、定理\n"
+            "2. 每道题挖掉一个关键术语/数值/结论，用 ______ 表示\n"
+            "3. 答案必须明确、唯一\n"
+            "4. 覆盖不同知识点，避免重复\n"
+            "5. 用 JSON 输出，不要额外说明\n\n"
+            '输出格式：\n'
+            '{"title": "线性代数 概念填空题", "source": "参考来源", '
+            '"questions": [{"id": 1, "question": "...______...", "answer": "..."}, ...]}'
         )
+
+        user_prompt = f"请基于以下试卷内容，出 10 道概念填空题：\n\n{all_text[:6000]}"
 
         resp = client.chat.completions.create(
             model=cfg["model"],
             messages=[
                 {"role": "system", "content": sys_prompt},
-                {"role": "user", "content": f"资料内容：\n{all_text[:6000]}\n\n请基于以上资料生成 10 道填空题。"},
+                {"role": "user", "content": user_prompt},
             ],
-            temperature=0.7,
+            temperature=0.5,
             response_format={"type": "json_object"},
         )
 
