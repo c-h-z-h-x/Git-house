@@ -87,21 +87,36 @@ def generate_exercises(subject: str) -> str:
         cfg = LLM_CONFIG.get("qwen", LLM_CONFIG["dashscope"])
         client = OpenAI(api_key=cfg["api_key"], base_url=cfg.get("base_url"))
 
-        sys_prompt = (
-            "你是一个出题助手。根据以下复习资料（期中/期末试卷），制作 10 道概念填空题。\n"
-            "要求：\n"
-            "1. 题目围绕试卷中出现的核心概念、定义、公式、定理\n"
-            "2. 每道题挖掉一个关键术语/数值/结论，用 ______ 表示\n"
-            "3. 答案必须明确、唯一\n"
-            "4. 覆盖不同知识点，避免重复\n"
-            "5. 每条加上 source 字段标明参考自哪份试卷\n"
-            "6. 用 JSON 输出，不要额外说明\n\n"
-            '输出格式：\n'
-            '{"title": "线性代数 概念填空题", "source": "参考来源", '
-            '"questions": [{"id": 1, "question": "...______...", "answer": "..."}, ...]}'
-        )
+        # 3) 判断是否有教材，决定出题策略
+        has_textbook = any('/教材/' in s or '/讲稿/' in s or '/讲义/' in s for s in seen_files)
+        cfg = LLM_CONFIG.get("qwen", LLM_CONFIG["dashscope"])
+        client = OpenAI(api_key=cfg["api_key"], base_url=cfg.get("base_url"))
 
-        user_prompt = f"请基于以下试卷内容，出 10 道概念填空题：\n\n{all_text[:6000]}"
+        if has_textbook:
+            sys_prompt = (
+                "你是一个出题助手。根据以下教材原文，制作 10 道原句挖空填空题。\n"
+                "规则：\n"
+                "1. 从原文中找出 10 个包含重要概念的完整句子\n"
+                "2. 每个句子中的核心术语替换为 ______（只挖一个名词性术语）\n"
+                "3. 题目必须直接出自原文，不得改写\n"
+                "4. 答案就是被挖掉的那个术语\n"
+                "5. 每条加 origin 字段放原句\n"
+                "6. 用 JSON 输出\n\n"
+                '示例：{"question": "______ 是反映矩阵特征的重要概念", "answer": "行列式", "origin": "行列式是反映矩阵特征的重要概念"}'
+            )
+            user_prompt = f"请从以下教材原文中找出 10 个定义句，每个挖掉一个核心概念：\n\n{all_text[:6000]}"
+        else:
+            sys_prompt = (
+                "你是一个出题助手。根据以下复习资料（期中/期末试卷），制作 10 道概念填空题。\n"
+                "要求：\n"
+                "1. 题目围绕试卷中出现的核心概念、定义、公式、定理\n"
+                "2. 每道题挖掉一个关键术语/数值/结论，用 ______ 表示\n"
+                "3. 答案必须明确、唯一\n"
+                "4. 覆盖不同知识点，避免重复\n"
+                "5. 用 JSON 输出\n\n"
+                '输出格式：{"title": "...", "source": "...", "questions": [...]}'
+            )
+            user_prompt = f"请基于以下试卷内容，出 10 道概念填空题：\n\n{all_text[:6000]}"
 
         resp = client.chat.completions.create(
             model=cfg["model"],
@@ -155,7 +170,7 @@ def get_agent():
         system_prompt = (
             "你是一个AI复习资料提供助手。请用简洁明了的语句为用户解答疑惑。\n"
             "使用 search_docs 搜索复习资料，结果中自带下载链接。\n"
-            "当用户要求生成练习题时，使用 generate_exercises 生成填空题。\n"
+            "当用户要求生成练习题时，使用 generate_exercises 生成填空题（有教材时自动用教材原句挖空）。\n"
             "直接输出 /files/xxx 原始链接，不要用 Markdown 格式包裹它们。\n"
             "如果不清楚答案请直接回答不知道，不需要丰富的感情。"
         )
@@ -244,7 +259,7 @@ async def api_exercises(data: dict):
 
         seen_files = set()
         all_text = ""
-        for r in results:
+        for r in sorted(results, key=lambda x: 0 if '/教材/' in x['path'] or '/讲稿/' in x['path'] or '/讲义/' in x['path'] else 1):
             if r["path"] not in seen_files and len(all_text) < 8000:
                 seen_files.add(r["path"])
                 full_path = os.path.join(REPO_DIR, r["path"])
@@ -256,19 +271,34 @@ async def api_exercises(data: dict):
         cfg = LLM_CONFIG.get("qwen", LLM_CONFIG["dashscope"])
         client = OpenAI(api_key=cfg["api_key"], base_url=cfg.get("base_url"))
 
-        # 3) 基于试卷内容出概念填空题
-        sys_prompt = (
-            "你是一个出题助手。根据以下复习资料（期中/期末试卷），制作 10 道概念填空题。\n"
-            "要求：\n"
-            "1. 题目围绕试卷中出现的核心概念、定义、公式、定理\n"
-            "2. 每道题挖掉一个关键术语/数值/结论，用 ______ 表示\n"
-            "3. 答案必须明确、唯一\n"
-            "4. 覆盖不同知识点，避免重复\n"
-            "5. 用 JSON 输出，不要额外说明\n\n"
-            '输出格式：\n'
-            '{"title": "线性代数 概念填空题", "source": "参考来源", '
-            '"questions": [{"id": 1, "question": "...______...", "answer": "..."}, ...]}'
-        )
+        # 3) 判断是否有教材
+        has_textbook = any('/教材/' in s or '/讲稿/' in s or '/讲义/' in s for s in seen_files)
+
+        if has_textbook:
+            sys_prompt = (
+                "你是一个出题助手。根据以下教材原文，制作 10 道原句挖空填空题。\n"
+                "规则：\n"
+                "1. 从原文中找出 10 个包含重要概念的完整句子\n"
+                "2. 每个句子中的核心术语替换为 ______\n"
+                "3. 题目必须直接出自原文，不得改写\n"
+                "4. 答案就是被挖掉的那个术语\n"
+                "5. 每条加 origin 字段放原句\n"
+                "6. 用 JSON 输出\n\n"
+                '示例：{"question": "______ 是反映矩阵特征的重要概念", "answer": "行列式", "origin": "行列式是反映矩阵特征的重要概念"}'
+            )
+            user_prompt = f"请从以下教材原文中找出 10 个定义句，每个挖掉一个核心概念：\n\n{all_text[:6000]}"
+        else:
+            sys_prompt = (
+                "你是一个出题助手。根据以下复习资料（期中/期末试卷），制作 10 道概念填空题。\n"
+                "要求：\n"
+                "1. 题目围绕试卷中出现的核心概念、定义、公式、定理\n"
+                "2. 每道题挖掉一个关键术语/数值/结论，用 ______ 表示\n"
+                "3. 答案必须明确、唯一\n"
+                "4. 覆盖不同知识点，避免重复\n"
+                "5. 用 JSON 输出\n\n"
+                '输出格式：{"title": "...", "source": "...", "questions": [...]}'
+            )
+            user_prompt = f"请基于以下试卷内容，出 10 道概念填空题：\n\n{all_text[:6000]}"
 
         user_prompt = f"请基于以下试卷内容，出 10 道概念填空题：\n\n{all_text[:6000]}"
 
