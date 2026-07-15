@@ -5,86 +5,95 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>复习资料助手 · Git-house</title>
 <style>
-  /* ── Reset & Base ── */
+  /* ── Reset & Theme ── */
   *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
   :root{
-    --accent:oklch(55% 0.15 260);
-    --accent-soft:oklch(70% 0.08 260);
-    --accent-bg:oklch(95% 0.03 260);
-    --surface:oklch(100% 0 0);
-    --sidebar:oklch(97% 0.005 260);
-    --border:oklch(92% 0.005 260);
-    --text:oklch(18% 0.01 260);
-    --text-secondary:oklch(50% 0.005 260);
-    --text-muted:oklch(70% 0 0);
-    --success:oklch(55% 0.15 145);
-    --error:oklch(52% 0.18 25);
+    --bark:#493b1c;
+    --sage:#75a08f;
+    --cream:#dee1ce;
+    --umber:#7f6649;
+    --sage-light:color-mix(in oklch,var(--sage) 20%,#fff);
+    --sage-dark:color-mix(in oklch,var(--sage) 80%,#000);
+    --cream-light:#f5f4ec;
+    --cream-dark:#c8ccb8;
+    --surface:#fff;
+    --sidebar:var(--cream-light);
+    --border:var(--cream-dark);
+    --text:var(--bark);
+    --text-secondary:var(--umber);
+    --text-muted:color-mix(in oklch,var(--umber) 60%,var(--cream));
+    --success:color-mix(in oklch,var(--sage) 70%,#2d6);
+    --error:oklch(60% 0.18 25);
     --radius:12px;
     --radius-sm:8px;
   }
   @media(prefers-color-scheme:dark){
     :root{
-      --accent:oklch(65% 0.18 260);
-      --accent-soft:oklch(55% 0.12 260);
-      --accent-bg:oklch(22% 0.05 260);
-      --surface:oklch(14% 0.01 260);
-      --sidebar:oklch(11% 0.01 260);
-      --border:oklch(22% 0.01 260);
-      --text:oklch(92% 0.005 260);
-      --text-secondary:oklch(62% 0.005 260);
-      --text-muted:oklch(42% 0 0);
+      --surface:color-mix(in oklch,var(--bark) 90%,#000);
+      --sidebar:color-mix(in oklch,var(--bark) 95%,#000);
+      --border:color-mix(in oklch,var(--umber) 60%,var(--bark));
+      --text:var(--cream);
+      --text-secondary:color-mix(in oklch,var(--cream) 70%,var(--umber));
+      --text-muted:color-mix(in oklch,var(--umber) 70%,var(--cream));
+      --cream-light:color-mix(in oklch,var(--bark) 90%,#000);
     }
   }
   body{
-    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei","Segoe UI",system-ui,sans-serif;
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Noto Sans SC","Microsoft YaHei",system-ui,sans-serif;
     background:var(--sidebar);
     color:var(--text);
-    height:100dvh;
-    overflow:hidden;
-    font-size:14px;
-    line-height:1.6;
+    height:100dvh;overflow:hidden;font-size:14px;line-height:1.6;
     -webkit-font-smoothing:antialiased;
   }
+  svg{fill:currentColor;flex-shrink:0}
 
-  /* ── Layout: Three-Column Desktop ── */
+  /* ── Layout ── */
   .app{display:flex;height:100dvh;max-width:1440px;margin:0 auto;padding:8px;gap:8px}
   @media(max-width:900px){.app{padding:0;gap:0}}
 
   /* ── Sidebar ── */
   .sidebar{
-    width:260px;flex-shrink:0;
+    width:240px;flex-shrink:0;
     background:var(--sidebar);border-radius:var(--radius);
-    display:flex;flex-direction:column;padding:16px;gap:4px;
+    display:flex;flex-direction:column;padding:20px 12px 16px;
     border:1px solid var(--border);
   }
   @media(max-width:900px){.sidebar{display:none}}
   .sidebar-brand{
-    font-size:15px;font-weight:600;padding:8px 12px;margin-bottom:8px;
-    display:flex;align-items:center;gap:8px;color:var(--text);
+    font-size:15px;font-weight:650;padding:8px 12px 16px;margin:0 0 8px;
+    display:flex;align-items:center;gap:10px;color:var(--text);
+    letter-spacing:-.01em;border-bottom:1px solid var(--border);
   }
-  .sidebar-brand span{background:var(--accent);color:#fff;width:28px;height:28px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:15px}
-  .sidebar-nav{display:flex;flex-direction:column;gap:2px;flex:1}
+  .sidebar-brand svg{width:22px;height:22px;color:var(--sage);flex-shrink:0}
+  .sidebar-nav{display:flex;flex-direction:column;gap:3px;flex:1;padding-top:4px}
   .sidebar-nav button{
     display:flex;align-items:center;gap:10px;padding:10px 12px;
     border:none;border-radius:var(--radius-sm);
     background:transparent;color:var(--text-secondary);
-    font-size:13px;cursor:pointer;transition:all .15s;
+    font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;
     text-align:left;width:100%;
   }
-  .sidebar-nav button:hover{background:var(--accent-bg);color:var(--text)}
-  .sidebar-nav button.active{background:var(--accent-bg);color:var(--accent);font-weight:500}
-  .sidebar-nav button .icon{font-size:16px;width:20px;text-align:center;flex-shrink:0}
+  .sidebar-nav button:hover{background:color-mix(in oklch,var(--sage) 10%,transparent);color:var(--text)}
+  .sidebar-nav button.active{background:color-mix(in oklch,var(--sage) 15%,transparent);color:var(--sage);font-weight:600}
+  .sidebar-nav button svg{width:18px;height:18px;flex-shrink:0;opacity:.7}
+  .sidebar-nav button.active svg{opacity:1;color:var(--sage)}
   .sidebar-footer{
     border-top:1px solid var(--border);padding-top:12px;margin-top:auto;
-    font-size:11px;color:var(--text-muted);padding:12px 12px 4px;
+    font-size:11px;color:var(--text-muted);padding:12px 12px 4px;line-height:1.5;
   }
+  .sidebar-footer .dot-wrap{display:flex;align-items:center;gap:6px;margin-bottom:4px}
+
+  /* ── Status dot ── */
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--sage);display:inline-block;flex-shrink:0}
+  .dot.off{background:var(--error);opacity:.5}
+  .dot.loading{animation:pulse 1.2s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
 
   /* ── Main Panel ── */
   .main{
     flex:1;display:flex;flex-direction:column;
     background:var(--surface);border-radius:var(--radius);
-    border:1px solid var(--border);overflow:hidden;
-    min-width:0;
+    border:1px solid var(--border);overflow:hidden;min-width:0;
   }
 
   /* ── Chat Header ── */
@@ -92,9 +101,12 @@
     padding:16px 24px;border-bottom:1px solid var(--border);
     display:flex;align-items:center;justify-content:space-between;flex-shrink:0;
   }
-  .chat-header h1{font-size:16px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:8px}
-  .chat-header h1 span{width:8px;height:8px;border-radius:50%;background:var(--success);display:inline-block}
-  .chat-header .status{font-size:12px;color:var(--text-muted)}
+  .chat-header h1{
+    font-size:16px;font-weight:650;color:var(--text);
+    display:flex;align-items:center;gap:10px;letter-spacing:-.01em;
+  }
+  .chat-header h1 svg{width:20px;height:20px;color:var(--sage)}
+  .chat-header .meta{font-size:12px;color:var(--text-muted)}
 
   /* ── Messages ── */
   .messages{flex:1;overflow-y:auto;padding:20px 24px;scroll-behavior:smooth}
@@ -106,22 +118,22 @@
   .bubble{
     max-width:72%;padding:12px 18px;border-radius:var(--radius);
     font-size:14px;line-height:1.7;white-space:pre-wrap;word-break:break-word;
-    animation:fadeSlide .25s ease-out;
+    animation:in .25s ease-out;
   }
   .msg.user .bubble{
-    background:var(--accent);color:#fff;
+    background:var(--sage);color:#fff;
     border-bottom-right-radius:4px;
   }
   .msg.bot .bubble{
-    background:var(--accent-bg);color:var(--text);
+    background:var(--cream-light);color:var(--text);
     border-bottom-left-radius:4px;
   }
   .msg.bot .bubble.loading{color:var(--text-muted);font-style:italic}
+  @keyframes in{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
   .msg .bubble a[download]{font-weight:600}
-  .msg .bubble a[download]:hover{filter:brightness(1.1)}
-  @keyframes fadeSlide{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  .msg .bubble a[download]:hover{filter:brightness(.9)}
 
-  /* ── Chat Input ── */
+  /* ── Input ── */
   .chat-input-area{
     padding:16px 24px 20px;border-top:1px solid var(--border);
     display:flex;gap:8px;flex-shrink:0;
@@ -129,173 +141,178 @@
   .chat-input-area input{
     flex:1;padding:10px 16px;
     border:1px solid var(--border);border-radius:var(--radius-sm);
-    font-size:14px;outline:none;transition:border .2s;
+    font-size:14px;outline:none;transition:border .2s,box-shadow .2s;
     background:var(--surface);color:var(--text);
   }
-  .chat-input-area input:focus{border-color:var(--accent)}
+  .chat-input-area input:focus{border-color:var(--sage);box-shadow:0 0 0 3px color-mix(in oklch,var(--sage) 15%,transparent)}
   .chat-input-area input::placeholder{color:var(--text-muted)}
   .chat-input-area button{
     padding:10px 24px;
-    background:var(--accent);color:#fff;
+    background:var(--sage);color:#fff;
     border:none;border-radius:var(--radius-sm);
-    font-size:14px;cursor:pointer;transition:background .2s,transform .1s;
+    font-size:14px;font-weight:500;cursor:pointer;
+    transition:background .2s,transform .1s;
   }
-  .chat-input-area button:hover{filter:brightness(1.1)}
+  .chat-input-area button:hover{background:var(--sage-dark)}
   .chat-input-area button:active{transform:scale(.97)}
   .chat-input-area button:disabled{opacity:.4;cursor:not-allowed}
   .chat-hint{text-align:center;padding:0 24px 12px;font-size:11px;color:var(--text-muted);flex-shrink:0}
 
-  /* ── Exercise Panel ── */
-  .exercise-area{flex:1;display:flex;flex-direction:column;overflow:hidden}
-  .exercise-header{padding:16px 24px;border-bottom:1px solid var(--border);flex-shrink:0}
-  .exercise-header h2{font-size:16px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:8px}
-  .exercise-header .src{font-size:12px;color:var(--text-muted);margin-top:2px}
-  .exercise-body{flex:1;overflow-y:auto;padding:16px 24px}
-  .exercise-body::-webkit-scrollbar{width:4px}
-  .exercise-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
-
-  .eq-wrap{
-    background:var(--accent-bg);border:1px solid var(--border);
-    border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:10px;
-    animation:fadeSlide .25s ease-out both;
-  }
-  .eq-wrap:nth-child(1){animation-delay:0s}
-  .eq-wrap:nth-child(2){animation-delay:.03s}
-  .eq-wrap:nth-child(3){animation-delay:.06s}
-  .eq-wrap.correct{border-color:var(--success);background:oklch(95% 0.03 145)}
-  .eq-wrap.wrong{border-color:var(--error);background:oklch(95% 0.03 25)}
-  @media(prefers-color-scheme:dark){
-    .eq-wrap.correct{background:oklch(20% 0.05 145)}
-    .eq-wrap.wrong{background:oklch(20% 0.05 25)}
-  }
-  .eq-num{
-    display:inline-flex;width:24px;height:24px;align-items:center;justify-content:center;
-    border-radius:50%;background:var(--accent);color:#fff;font-size:12px;font-weight:700;
-    margin-right:8px;vertical-align:middle;flex-shrink:0;
-  }
-  .eq-text{font-size:14px;line-height:1.7;color:var(--text)}
-  .eq-text .blank-highlight{
-    display:inline-block;min-width:80px;
-    border-bottom:2px dashed var(--accent);color:var(--accent);
-    font-weight:700;text-align:center;padding:0 4px;
-  }
-  .eq-text .blank-filled{border-bottom-color:var(--success);color:var(--success)}
-  .eq-text .blank-wrong{border-bottom-color:var(--error);color:var(--error)}
-  .eq-answer-row{display:flex;gap:8px;margin-top:10px;align-items:center}
-  .eq-answer-row input{
-    flex:1;padding:8px 12px;border:1px solid var(--border);
-    border-radius:6px;font-size:13px;outline:none;transition:border .2s;
-    background:var(--surface);color:var(--text);
-  }
-  .eq-answer-row input:focus{border-color:var(--accent)}
-  .eq-answer-row input:disabled{opacity:.5}
-  .eq-answer-row .result-tag{font-size:13px;font-weight:700;white-space:nowrap;padding:4px 10px;border-radius:6px}
-  .eq-answer-row .result-tag.correct{color:var(--success);background:oklch(95% 0.03 145)}
-  .eq-answer-row .result-tag.wrong{color:var(--error);background:oklch(95% 0.03 25)}
-  .eq-answer-row .correct-answer{font-size:12px;color:var(--text-muted);margin-left:4px}
-
-  .exercise-footer{
-    padding:14px 24px 18px;border-top:1px solid var(--border);
-    display:flex;gap:12px;align-items:center;flex-shrink:0;
-  }
-  .exercise-footer .score{font-size:16px;font-weight:700;color:var(--accent);min-width:80px}
-  .exercise-footer button{
-    padding:9px 20px;border:none;border-radius:var(--radius-sm);
-    font-size:13px;cursor:pointer;transition:all .15s;
-  }
-  .btn-submit{background:var(--accent);color:#fff}
-  .btn-submit:hover{filter:brightness(1.1)}
-  .btn-submit:disabled{opacity:.4;cursor:not-allowed}
-  .btn-retry{background:var(--accent-bg);color:var(--text)}
-  .btn-retry:hover{filter:brightness(.95)}
-
-  .exercise-empty{
-    flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
-    color:var(--text-muted);gap:8px;font-size:14px;
-  }
-  .exercise-empty .big-icon{font-size:48px;opacity:.3}
-
-  /* ── Transition: panels ── */
+  /* ── Panels ── */
   .panels{flex:1;display:flex;overflow:hidden;position:relative}
   .panel{position:absolute;inset:0;display:flex;flex-direction:column;
     transition:opacity .2s,transform .2s;opacity:0;transform:translateX(16px);pointer-events:none}
   .panel.active{opacity:1;transform:translateX(0);pointer-events:auto}
 
-  /* ── Status dot pulse ── */
-  .status-dot{width:8px;height:8px;border-radius:50%;background:var(--success);display:inline-block}
-  .status-dot.indexing{background:var(--text-muted);animation:pulse 1.5s ease-in-out infinite}
-  @keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
+  /* ── Exercise ── */
+  .exercise-area{flex:1;display:flex;flex-direction:column;overflow:hidden}
+  .exercise-header{padding:16px 24px;border-bottom:1px solid var(--border);flex-shrink:0}
+  .exercise-header h2{
+    font-size:16px;font-weight:650;color:var(--text);
+    display:flex;align-items:center;gap:8px;letter-spacing:-.01em;
+  }
+  .exercise-header h2 svg{width:18px;height:18px;color:var(--sage)}
+  .exercise-header .src{font-size:12px;color:var(--text-muted);margin-top:2px}
+  .exercise-body{flex:1;overflow-y:auto;padding:16px 24px}
+  .exercise-body::-webkit-scrollbar{width:4px}
+  .exercise-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+  .eq-wrap{
+    background:var(--cream-light);border:1px solid var(--border);
+    border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:10px;
+    animation:in .25s ease-out both;
+  }
+  .eq-wrap:nth-child(1){animation-delay:0s}
+  .eq-wrap:nth-child(2){animation-delay:.03s}
+  .eq-wrap:nth-child(3){animation-delay:.06s}
+  .eq-wrap.correct{border-color:var(--success);background:color-mix(in oklch,var(--sage) 8%,var(--cream-light))}
+  .eq-wrap.wrong{border-color:var(--error);background:color-mix(in oklch,var(--error) 8%,var(--cream-light))}
+  .eq-num{
+    display:inline-flex;width:26px;height:26px;align-items:center;justify-content:center;
+    border-radius:50%;background:var(--sage);color:#fff;
+    font-size:12px;font-weight:700;margin-right:10px;vertical-align:middle;flex-shrink:0;
+  }
+  .eq-text{font-size:14px;line-height:1.7;color:var(--text)}
+  .eq-text .blank-highlight{
+    display:inline-block;min-width:80px;
+    border-bottom:2px dashed var(--sage);color:var(--sage);
+    font-weight:700;text-align:center;padding:0 4px;
+  }
+  .eq-text .blank-filled{border-bottom-color:var(--success);color:var(--success)}
+  .eq-text .blank-wrong{border-bottom-color:var(--error);color:var(--error)}
+  .eq-answer-row{display:flex;gap:8px;margin-top:10px;align-items:center;flex-wrap:wrap}
+  .eq-answer-row input{
+    flex:1;min-width:120px;padding:8px 12px;border:1px solid var(--border);
+    border-radius:6px;font-size:13px;outline:none;transition:border .2s,box-shadow .2s;
+    background:var(--surface);color:var(--text);
+  }
+  .eq-answer-row input:focus{border-color:var(--sage);box-shadow:0 0 0 3px color-mix(in oklch,var(--sage) 12%,transparent)}
+  .eq-answer-row input:disabled{opacity:.5}
+  .eq-answer-row .result-tag{
+    font-size:12px;font-weight:700;white-space:nowrap;padding:4px 10px;border-radius:6px;
+    display:inline-flex;align-items:center;gap:4px;
+  }
+  .eq-answer-row .result-tag svg{width:14px;height:14px}
+  .eq-answer-row .result-tag.correct{color:color-mix(in oklch,var(--sage) 80%,#000);background:color-mix(in oklch,var(--sage) 12%,transparent)}
+  .eq-answer-row .result-tag.wrong{color:var(--error);background:color-mix(in oklch,var(--error) 10%,transparent)}
+  .eq-answer-row .correct-answer{font-size:12px;color:var(--text-muted)}
+  .exercise-footer{
+    padding:14px 24px 18px;border-top:1px solid var(--border);
+    display:flex;gap:12px;align-items:center;flex-shrink:0;flex-wrap:wrap;
+  }
+  .exercise-footer .score{font-size:15px;font-weight:700;color:var(--sage);min-width:80px}
+  .exercise-footer button{
+    padding:9px 20px;border:none;border-radius:var(--radius-sm);
+    font-size:13px;font-weight:500;cursor:pointer;transition:all .15s;
+  }
+  .btn-submit{background:var(--sage);color:#fff}
+  .btn-submit:hover{background:var(--sage-dark)}
+  .btn-submit:disabled{opacity:.4;cursor:not-allowed}
+  .btn-retry{background:var(--cream-light);color:var(--text-secondary)}
+  .btn-retry:hover{background:var(--cream-dark)}
+  .exercise-empty{
+    flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    color:var(--text-muted);gap:12px;font-size:14px;
+  }
+  .exercise-empty svg{width:48px;height:48px;opacity:.25;color:var(--umber)}
 </style>
 </head>
 <body>
 <div class="app">
 
-  <!-- ═══ Sidebar ═══ -->
+  <!-- Sidebar -->
   <aside class="sidebar">
-    <div class="sidebar-brand"><span>📚</span> Git-house</div>
+    <div class="sidebar-brand">
+      <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h12" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg>
+      Git-house
+    </div>
     <nav class="sidebar-nav">
       <button class="active" data-panel="chat" onclick="switchPanel('chat')">
-        <span class="icon">💬</span> 对话
+        <svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        对话
       </button>
       <button data-panel="exercise" onclick="switchPanel('exercise')">
-        <span class="icon">📝</span> 习题
+        <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        习题
       </button>
     </nav>
     <div class="sidebar-footer">
-      <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
-        <span class="status-dot" id="statusDot"></span>
-        <span id="statusText" style="font-size:11px;color:var(--text-muted)">连接中...</span>
+      <div class="dot-wrap">
+        <span class="dot" id="statusDot"></span>
+        <span id="statusText" style="font-size:11px">连接中...</span>
       </div>
-      清华大学无穹书院
+      清华大学 · 无穹书院
     </div>
   </aside>
 
-  <!-- ═══ Main Content ═══ -->
+  <!-- Main -->
   <main class="main">
-
-    <!-- 面板容器 -->
     <div class="panels">
 
-      <!-- 聊天面板 -->
+      <!-- Chat Panel -->
       <div class="panel active" id="panel-chat" style="display:flex;flex-direction:column">
         <div class="chat-header">
-          <h1>📚 复习资料助手 <span></span></h1>
-          <span class="status">搜索 · 下载 · 练习题</span>
+          <h1>
+            <svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h12" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/></svg>
+            复习资料助手
+          </h1>
+          <span class="meta">搜索 · 习题 · 下载</span>
         </div>
         <div class="messages" id="messages">
           <div class="msg bot">
-            <div class="bubble">你好！有什么需要帮忙的吗？<br><br>
-            💡 试试这些：<br>
+            <div class="bubble">你好！需要找什么资料？<br><br>
             • 搜一下微积分的资料<br>
             • 生成线代填空题<br>
             • 打包下载概率论资料</div>
           </div>
         </div>
         <div class="chat-input-area">
-          <input type="text" id="input" placeholder="输入你的问题…" autofocus>
+          <input type="text" id="input" placeholder="输入你想搜索的内容…" autofocus>
           <button id="sendBtn">发送</button>
         </div>
-        <div class="chat-hint">Enter 发送 &nbsp;·&nbsp; 说「生成练习题」试试</div>
+        <div class="chat-hint">Enter 发送 · 试试「生成练习题」</div>
       </div>
 
-      <!-- 习题面板 -->
+      <!-- Exercise Panel -->
       <div class="panel" id="panel-exercise">
         <div class="exercise-area">
           <div class="exercise-header">
-            <h2>📝 <span id="ex-title">填空题</span></h2>
+            <h2>
+              <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span id="ex-title">填空题</span>
+            </h2>
             <div class="src" id="ex-source"></div>
           </div>
           <div class="exercise-body" id="ex-body">
             <div class="exercise-empty" id="ex-empty">
-              <div class="big-icon">📝</div>
+              <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11" stroke="currentColor" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
               <div>在对话中输入「生成练习题」</div>
             </div>
             <div id="ex-questions" style="display:none;"></div>
           </div>
           <div class="exercise-footer" id="ex-footer" style="display:none;">
             <div class="score" id="ex-score">得分: 0/10</div>
-            <button class="btn-submit" id="ex-submit" onclick="submitExercise()">提交批改</button>
-            <button class="btn-retry" id="ex-retry" onclick="resetExercise()" style="display:none;">重新作答</button>
+            <button class="btn-submit" id="ex-submit">提交批改</button>
+            <button class="btn-retry" id="ex-retry" style="display:none;">重新作答</button>
           </div>
         </div>
       </div>
@@ -305,19 +322,18 @@
 </div>
 
 <script>
-// ═══ State ═══
 const messages=document.getElementById('messages');
 const input=document.getElementById('input');
 const sendBtn=document.getElementById('sendBtn');
 let ws=null;
 let currentQuestions=[];
 
-// ═══ WebSocket ═══
+// WebSocket
 function connect(){
   if(location.protocol==='file:'){
     document.getElementById('messages').innerHTML=
-      '<div class="msg bot"><div class="bubble" style="background:oklch(92% 0.05 45);color:oklch(40% 0.15 45)">'+
-      '⚠️ 不要直接双击这个文件！<br><br>请运行 <b>start.bat</b> 或 <b>python app.py</b><br>然后访问 http://127.0.0.1:8000</div></div>';
+      '<div class="msg bot"><div class="bubble" style="background:color-mix(in oklch,var(--error) 10%,var(--cream-light));color:var(--error)">'+
+      '请先运行 <b>start.bat</b> 启动服务<br>然后访问 http://127.0.0.1:8000</div></div>';
     return;
   }
   const p=location.protocol==='https:'?'wss:':'ws:';
@@ -329,44 +345,47 @@ function connect(){
   };
   ws.onerror=()=>{
     document.getElementById('messages').innerHTML=
-      '<div class="msg bot"><div class="bubble" style="background:oklch(92% 0.05 45);color:oklch(40% 0.15 45)">'+
-      '⚠️ 无法连接服务器<br><br>请确认已运行 <b>start.bat</b> 或 <b>python app.py</b><br>然后刷新页面</div></div>';
-    setStatus('offline','离线');
+      '<div class="msg bot"><div class="bubble" style="background:color-mix(in oklch,var(--error) 10%,var(--cream-light));color:var(--error)">'+
+      '无法连接服务器<br>请确认已运行 <b>start.bat</b></div></div>';
+    setStatus('off','离线');
   };
-  ws.onopen=()=>setStatus('online','运行中');
-  ws.onclose=()=>{setStatus('offline','已断开');setTimeout(connect,2000)};
+  ws.onopen=()=>setStatus('on','运行中');
+  ws.onclose=()=>{setStatus('off','已断开');setTimeout(connect,2000)};
 }
 connect();
 
 function setStatus(state,label){
   const dot=document.getElementById('statusDot');
   const txt=document.getElementById('statusText');
-  dot.className='status-dot'+(state==='online'?'':' indexing');
-  dot.style.background=state==='online'?'var(--success)':'var(--error)';
+  dot.className='dot'+(state==='on'?'':' off');
+  dot.style.background=state==='on'?'var(--sage)':'var(--error)';
   txt.textContent=label;
 }
 
-// ═══ Panel Switch ═══
 function switchPanel(name){
   document.querySelectorAll('.sidebar-nav button').forEach(b=>b.classList.toggle('active',b.dataset.panel===name));
   document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active',p.id==='panel-'+name));
   if(name==='chat')input.focus();
 }
 
-// ═══ Chat ═══
 function escapeHtml(s){const d=document.createElement('div');d.textContent=s;return d.innerHTML}
+
 function linkify(t){
   let h=escapeHtml(t);
-  h=h.replace(/\[([^\]]+)\]\(\/files\/(.+)\)/g,(_,t,fp)=>
-    '<a href="/files/'+escapeHtml(fp)+'" download style="display:inline-block;margin:4px 0;padding:6px 14px;background:var(--accent);color:#fff;border-radius:6px;text-decoration:none;font-size:13px">📥 下载 '+escapeHtml(t)+'</a>');
+  h=h.replace(/\[([^\]]+)\]\(\/files\/(.+)\)/g,(_,t,fp)=>{
+    const icon='<svg viewBox="0 0 24 24" style="width:14px;height:14px;vertical-align:middle;margin-right:4px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    return '<a href="/files/'+escapeHtml(fp)+'" download style="display:inline-flex;align-items:center;gap:4px;margin:4px 0;padding:6px 14px;background:var(--sage);color:#fff;border-radius:6px;text-decoration:none;font-size:13px;font-weight:600">'+icon+escapeHtml(t)+'</a>';
+  });
   h=h.replace(/\/files\/[^\s<"']+/g,m=>{
     let c=m;const pc=(c.match(/\(/g)||[]).length,cc=(c.match(/\)/g)||[]).length;
     if(cc>pc)c=c.replace(/\)+$/,'');
     const fn=c.replace('/files/','').split('/').pop().replace(/^.*[/\\]/,'');
-    return '<a href="'+c+'" download style="display:inline-block;margin:4px 0;padding:6px 14px;background:var(--accent);color:#fff;border-radius:6px;text-decoration:none;font-size:13px">📥 下载 '+escapeHtml(fn)+'</a>';
+    const icon='<svg viewBox="0 0 24 24" style="width:14px;height:14px;vertical-align:middle;margin-right:4px"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    return '<a href="'+c+'" download style="display:inline-flex;align-items:center;gap:4px;margin:4px 0;padding:6px 14px;background:var(--sage);color:#fff;border-radius:6px;text-decoration:none;font-size:13px;font-weight:600">'+icon+escapeHtml(fn)+'</a>';
   });
   return h;
 }
+
 function addMsg(r,t){
   const d=document.createElement('div');d.className='msg '+r;
   const b=document.createElement('div');b.className='bubble';b.innerHTML=linkify(t);
@@ -381,7 +400,7 @@ function send(){
 input.addEventListener('keydown',e=>{if(e.key==='Enter')send()});
 sendBtn.addEventListener('click',send);
 
-// ═══ Exercise ═══
+// Exercise
 function renderExercise(d){
   currentQuestions=(d.questions||[]).map(q=>({id:q.id,question:q.question,answer:q.answer,userAnswer:'',status:null}));
   document.getElementById('ex-title').textContent=d.title||'填空题';
@@ -400,6 +419,13 @@ function renderExercise(d){
     c.appendChild(w);
   });
 }
+
+function resultIcon(ok){
+  return ok
+    ? '<svg viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+    : '<svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+}
+
 function submitExercise(){
   let correct=0;
   currentQuestions.forEach((q,i)=>{
@@ -411,7 +437,8 @@ function submitExercise(){
     q.status=ok?'correct':'wrong';
     ie.disabled=true;
     we.classList.remove('correct','wrong');we.classList.add(ok?'correct':'wrong');
-    re.style.display='inline-block';re.className='result-tag '+(ok?'correct':'wrong');re.textContent=ok?'✓ 正确':'✗ 错误';
+    re.style.display='inline-flex';re.className='result-tag '+(ok?'correct':'wrong');
+    re.innerHTML=resultIcon(ok)+(ok?'正确':'错误');
     const row=ie.parentElement;
     if(!row.querySelector('.correct-answer')){
       const h=document.createElement('span');h.className='correct-answer';
