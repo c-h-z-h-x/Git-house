@@ -16,8 +16,8 @@
     --sage-dark:color-mix(in oklch,var(--sage) 80%,#000);
     --cream-light:#f5f4ec;
     --cream-dark:#c8ccb8;
-    --surface:#fff;
-    --sidebar:var(--cream-light);
+    --surface:var(--cream);
+    --sidebar:var(--cream);
     --border:var(--cream-dark);
     --text:var(--bark);
     --text-secondary:var(--bark);
@@ -29,8 +29,8 @@
   }
   @media(prefers-color-scheme:dark){
     :root{
-      --surface:color-mix(in oklch,var(--bark) 90%,#000);
-      --sidebar:color-mix(in oklch,var(--bark) 95%,#000);
+      --surface:color-mix(in oklch,var(--bark) 85%,#000);
+      --sidebar:color-mix(in oklch,var(--bark) 85%,#000);
       --border:color-mix(in oklch,var(--umber) 60%,var(--bark));
       --text:var(--cream);
       --text-secondary:var(--cream);
@@ -40,7 +40,7 @@
   }
   body{
     font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Noto Sans SC","Microsoft YaHei",system-ui,sans-serif;
-    background:var(--sidebar);
+    background:var(--sage);
     color:var(--text);
     height:100dvh;overflow:hidden;font-size:14px;line-height:1.6;
     -webkit-font-smoothing:antialiased;
