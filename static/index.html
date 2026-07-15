@@ -15,9 +15,9 @@
     align-items: center;
   }
   .container {
-    width: 640px;
+    width: 680px;
     max-width: 96vw;
-    height: 86vh;
+    height: 90vh;
     background: #fff;
     border-radius: 16px;
     box-shadow: 0 8px 32px rgba(0,0,0,.1);
@@ -25,22 +25,67 @@
     flex-direction: column;
     overflow: hidden;
   }
-  .header {
-    padding: 18px 24px;
+
+  /* ── 标签栏 ── */
+  .tabs {
+    display: flex;
+    border-bottom: 1px solid #eee;
+    background: #fafafa;
+  }
+  .tab-btn {
+    flex: 1;
+    padding: 14px 0;
+    border: none;
+    background: transparent;
+    font-size: 14px;
+    font-weight: 500;
+    color: #888;
+    cursor: pointer;
+    transition: all .2s;
+    border-bottom: 2px solid transparent;
+  }
+  .tab-btn:hover { color: #555; }
+  .tab-btn.active {
+    color: #1a73e8;
+    border-bottom-color: #1a73e8;
+    background: #fff;
+  }
+
+  /* ── 面板容器 ── */
+  .panels { flex: 1; display: flex; overflow: hidden; position: relative; }
+  .panel {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    transition: opacity .25s, transform .25s;
+    opacity: 0;
+    transform: translateX(20px);
+    pointer-events: none;
+  }
+  .panel.active {
+    opacity: 1;
+    transform: translateX(0);
+    pointer-events: auto;
+  }
+
+  /* ========= 聊天面板 ========= */
+  .chat-header {
+    padding: 14px 24px 10px;
     border-bottom: 1px solid #eee;
     background: #fff;
   }
-  .header h1 { font-size: 18px; font-weight: 600; color: #1a1a2e; }
-  .header p { font-size: 13px; color: #888; margin-top: 2px; }
+  .chat-header h1 { font-size: 17px; font-weight: 600; color: #1a1a2e; }
+  .chat-header p { font-size: 12px; color: #999; margin-top: 1px; }
   .messages {
     flex: 1;
     overflow-y: auto;
-    padding: 20px 24px;
+    padding: 16px 24px;
     scroll-behavior: smooth;
   }
   .messages::-webkit-scrollbar { width: 4px; }
   .messages::-webkit-scrollbar-thumb { background: #ddd; border-radius: 4px; }
-  .msg { margin-bottom: 16px; display: flex; }
+  .msg { margin-bottom: 14px; display: flex; }
   .msg.user { justify-content: flex-end; }
   .msg.bot { justify-content: flex-start; }
   .bubble {
@@ -63,14 +108,14 @@
     border-bottom-left-radius: 4px;
   }
   .msg.bot .bubble.loading { color: #999; font-style: italic; }
-  .input-area {
-    padding: 16px 24px;
+  .chat-input-area {
+    padding: 12px 24px 16px;
     border-top: 1px solid #eee;
     display: flex;
     gap: 8px;
     background: #fff;
   }
-  .input-area input {
+  .chat-input-area input {
     flex: 1;
     padding: 10px 14px;
     border: 1px solid #ddd;
@@ -79,8 +124,8 @@
     outline: none;
     transition: border .2s;
   }
-  .input-area input:focus { border-color: #1a73e8; }
-  .input-area button {
+  .chat-input-area input:focus { border-color: #1a73e8; }
+  .chat-input-area button {
     padding: 10px 20px;
     background: #1a73e8;
     color: #fff;
@@ -90,52 +135,258 @@
     cursor: pointer;
     transition: background .2s;
   }
-  .input-area button:hover { background: #1557b0; }
-  .input-area button:disabled { background: #aaa; cursor: not-allowed; }
-  .hint {
+  .chat-input-area button:hover { background: #1557b0; }
+  .chat-input-area button:disabled { background: #aaa; cursor: not-allowed; }
+  .chat-hint {
     text-align: center;
-    padding: 8px 24px;
+    padding: 6px 24px 12px;
     font-size: 12px;
     color: #bbb;
   }
+
+  /* ========= 习题面板 ========= */
+  .exercise-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  .exercise-header {
+    padding: 14px 24px 10px;
+    border-bottom: 1px solid #eee;
+  }
+  .exercise-header h2 { font-size: 17px; font-weight: 600; color: #1a1a2e; }
+  .exercise-header .src { font-size: 12px; color: #999; margin-top: 2px; }
+  .exercise-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 24px;
+  }
+  .exercise-body::-webkit-scrollbar { width: 4px; }
+  .exercise-body::-webkit-scrollbar-thumb { background: #ddd; border-radius: 4px; }
+
+  .eq-wrap {
+    background: #fafbfc;
+    border: 1px solid #e8eaed;
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 12px;
+  }
+  .eq-wrap.correct { border-color: #34a853; background: #f0faf4; }
+  .eq-wrap.wrong { border-color: #ea4335; background: #fef2f2; }
+
+  .eq-num {
+    display: inline-block;
+    width: 24px;
+    height: 24px;
+    line-height: 24px;
+    text-align: center;
+    border-radius: 50%;
+    background: #1a73e8;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+  .eq-text {
+    font-size: 14px;
+    line-height: 1.7;
+    color: #1a1a2e;
+    vertical-align: middle;
+  }
+  .eq-text .blank-highlight {
+    display: inline-block;
+    min-width: 80px;
+    border-bottom: 2px dashed #1a73e8;
+    color: #1a73e8;
+    font-weight: 600;
+    text-align: center;
+    padding: 0 4px;
+  }
+  .eq-text .blank-filled {
+    border-bottom: 2px solid #34a853;
+    color: #34a853;
+  }
+  .eq-text .blank-wrong {
+    border-bottom: 2px solid #ea4335;
+    color: #ea4335;
+  }
+
+  .eq-answer-row {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+    align-items: center;
+  }
+  .eq-answer-row input {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 13px;
+    outline: none;
+    transition: border .2s;
+  }
+  .eq-answer-row input:focus { border-color: #1a73e8; }
+  .eq-answer-row input:disabled { background: #f5f5f5; }
+  .eq-answer-row .result-tag {
+    font-size: 13px;
+    font-weight: 500;
+    white-space: nowrap;
+    padding: 4px 10px;
+    border-radius: 6px;
+  }
+  .eq-answer-row .result-tag.correct { color: #34a853; background: #e6f4ea; }
+  .eq-answer-row .result-tag.wrong { color: #ea4335; background: #fce8e6; }
+  .eq-answer-row .correct-answer {
+    font-size: 12px;
+    color: #888;
+  }
+
+  .exercise-footer {
+    padding: 14px 24px 18px;
+    border-top: 1px solid #eee;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    background: #fff;
+  }
+  .exercise-footer .score {
+    font-size: 15px;
+    font-weight: 600;
+    color: #1a73e8;
+    min-width: 80px;
+  }
+  .exercise-footer button {
+    padding: 9px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background .2s;
+  }
+  .btn-submit { background: #1a73e8; color: #fff; }
+  .btn-submit:hover { background: #1557b0; }
+  .btn-submit:disabled { background: #aaa; cursor: not-allowed; }
+  .btn-retry { background: #f0f2f5; color: #333; }
+  .btn-retry:hover { background: #e0e2e5; }
+
+  .exercise-empty {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #bbb;
+    font-size: 14px;
+    gap: 8px;
+  }
+  .exercise-empty .big-icon { font-size: 48px; }
+
+  @keyframes fadeSlideIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .eq-wrap { animation: fadeSlideIn .3s ease; }
+  .eq-wrap:nth-child(2) { animation-delay: .05s; }
+  .eq-wrap:nth-child(3) { animation-delay: .1s; }
 </style>
 </head>
 <body>
 <div class="container">
-  <div class="header">
-    <h1>📚 复习资料助手</h1>
-    <p>搜索文档 · 打包下载 · 随问随答</p>
+
+  <!-- 标签栏 -->
+  <div class="tabs">
+    <button class="tab-btn active" data-panel="chat" onclick="switchPanel('chat')">💬 对话</button>
+    <button class="tab-btn" data-panel="exercise" onclick="switchPanel('exercise')">📝 习题</button>
   </div>
-  <div class="messages" id="messages">
-    <div class="msg bot">
-      <div class="bubble">你好！有什么需要帮忙的吗？<br>例如：<br>• 搜一下微积分的资料<br>• 打包人工智能导引</div>
+
+  <!-- 面板容器 -->
+  <div class="panels">
+
+    <!-- ═══ 聊天面板 ═══ -->
+    <div class="panel active" id="panel-chat">
+      <div class="chat-header">
+        <h1>📚 复习资料助手</h1>
+        <p>搜索文档 · 下载 · 生成练习题</p>
+      </div>
+      <div class="messages" id="messages">
+        <div class="msg bot">
+          <div class="bubble">你好！有什么需要帮忙的吗？<br>例如：<br>• 搜一下微积分的资料<br>• 💡 生成线代填空题</div>
+        </div>
+      </div>
+      <div class="chat-input-area">
+        <input type="text" id="input" placeholder="输入你的问题…" autofocus>
+        <button id="sendBtn">发送</button>
+      </div>
+      <div class="chat-hint">按 Enter 发送 &nbsp;·&nbsp; 回复「生成练习题」试试</div>
     </div>
+
+    <!-- ═══ 习题面板 ═══ -->
+    <div class="panel" id="panel-exercise">
+      <div class="exercise-area">
+        <div class="exercise-header">
+          <h2 id="ex-title">📝 填空题</h2>
+          <div class="src" id="ex-source"></div>
+        </div>
+        <div class="exercise-body" id="ex-body">
+          <div class="exercise-empty" id="ex-empty">
+            <div class="big-icon">📝</div>
+            <div>在对话中输入「生成练习题」</div>
+            <div style="font-size:12px;color:#ccc;">或直接点击习题标签查看已有题目</div>
+          </div>
+          <div id="ex-questions" style="display:none;"></div>
+        </div>
+        <div class="exercise-footer" id="ex-footer" style="display:none;">
+          <div class="score" id="ex-score">得分: 0/10</div>
+          <button class="btn-submit" id="ex-submit" onclick="submitExercise()">提交批改</button>
+          <button class="btn-retry" id="ex-retry" onclick="resetExercise()" style="display:none;">重新作答</button>
+        </div>
+      </div>
+    </div>
+
   </div>
-  <div class="input-area">
-    <input type="text" id="input" placeholder="输入你的问题…" autofocus>
-    <button id="sendBtn">发送</button>
-  </div>
-  <div class="hint">按 Enter 发送 &nbsp;·&nbsp; 支持搜索文档与打包下载</div>
 </div>
 
 <script>
+// ═══ 全局状态 ═══
 const messages = document.getElementById('messages');
 const input = document.getElementById('input');
 const sendBtn = document.getElementById('sendBtn');
 
 let ws = null;
+let currentQuestions = [];     // [{id, question, answer}]
+let exerciseMode = false;     // 当前是否在习题模式
+
+// ═══ WebSocket ═══
 function connect() {
   const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
   ws = new WebSocket(`${proto}//${location.host}/ws`);
   ws.onmessage = (e) => {
     const data = JSON.parse(e.data);
-    removeLoading();
-    addMsg('bot', data.reply);
+    if (data.type === 'exercise') {
+      // 收到习题数据 → 渲染并切到习题面板
+      renderExercise(data);
+      switchPanel('exercise');
+    } else {
+      // 普通回复
+      removeLoading();
+      addMsg('bot', data.reply);
+    }
   };
   ws.onclose = () => setTimeout(connect, 1000);
 }
 connect();
 
+// ═══ 面板切换 ═══
+function switchPanel(name) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.panel === name));
+  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + name));
+  if (name === 'chat') input.focus();
+}
+
+// ═══ 聊天消息 ═══
 function escapeHtml(str) {
   const d = document.createElement('div');
   d.textContent = str;
@@ -144,22 +395,16 @@ function escapeHtml(str) {
 
 function linkify(text) {
   let html = escapeHtml(text);
-  // 1) 先处理 LLM 输出的 Markdown 链接: [text](/files/xxx)
-  // 贪婪匹配到最后一个 )，兼容文件名中的括号
-  html = html.replace(/\[([^\]]+)\]\(\/files\/(.+)\)/g, function(match, text, filepath) {
-    return '<a href="/files/' + escapeHtml(filepath) + '" download style="display:inline-block;margin:4px 0;padding:6px 14px;background:#1a73e8;color:#fff;border-radius:6px;text-decoration:none;font-size:13px;cursor:pointer;">📥 下载 ' + escapeHtml(text) + '</a>';
+  html = html.replace(/\[([^\]]+)\]\(\/files\/(.+)\)/g, function(m, t, fp) {
+    return '<a href="/files/' + escapeHtml(fp) + '" download style="display:inline-block;margin:4px 0;padding:6px 14px;background:#1a73e8;color:#fff;border-radius:6px;text-decoration:none;font-size:13px;cursor:pointer;">📥 下载 ' + escapeHtml(t) + '</a>';
   });
-  // 2) 再处理纯文本的 /files/xxx（不允许 ) 尾缀，但允许 ) 出现在文件名中间）
   html = html.replace(/\/files\/[^\s<"']+/g, function(match) {
-    // 如果末尾有 ) 且前面没有匹配的 ( ，说明是多余的 Markdown 尾缀
-    var cleanMatch = match;
-    var parenCount = (cleanMatch.match(/\(/g)||[]).length;
-    var closeParenCount = (cleanMatch.match(/\)/g)||[]).length;
-    if (closeParenCount > parenCount) {
-      cleanMatch = cleanMatch.replace(/\)+$/, '');
-    }
-    var filename = cleanMatch.replace('/files/', '').split('/').pop().replace(/^.*[/\\]/, '');
-    return '<a href="' + cleanMatch + '" download style="display:inline-block;margin:4px 0;padding:6px 14px;background:#1a73e8;color:#fff;border-radius:6px;text-decoration:none;font-size:13px;cursor:pointer;">📥 下载 ' + escapeHtml(filename) + '</a>';
+    var clean = match;
+    var pc = (clean.match(/\(/g)||[]).length;
+    var cc = (clean.match(/\)/g)||[]).length;
+    if (cc > pc) clean = clean.replace(/\)+$/, '');
+    var fn = clean.replace('/files/', '').split('/').pop().replace(/^.*[/\\]/, '');
+    return '<a href="' + clean + '" download style="display:inline-block;margin:4px 0;padding:6px 14px;background:#1a73e8;color:#fff;border-radius:6px;text-decoration:none;font-size:13px;cursor:pointer;">📥 下载 ' + escapeHtml(fn) + '</a>';
   });
   return html;
 }
@@ -176,8 +421,8 @@ function addMsg(role, text) {
 }
 
 function removeLoading() {
-  const loading = messages.querySelector('.msg.bot:last-child .bubble.loading');
-  if (loading) loading.closest('.msg').remove();
+  const l = messages.querySelector('.msg.bot:last-child .bubble.loading');
+  if (l) l.closest('.msg').remove();
 }
 
 function send() {
@@ -194,6 +439,126 @@ function send() {
 
 input.addEventListener('keydown', (e) => { if (e.key === 'Enter') send(); });
 sendBtn.addEventListener('click', send);
+
+// ═══ 习题渲染 ═══
+function renderExercise(data) {
+  currentQuestions = (data.questions || []).map(q => ({
+    id: q.id,
+    question: q.question,
+    answer: q.answer,
+    userAnswer: '',
+    status: null   // null / 'correct' / 'wrong'
+  }));
+
+  document.getElementById('ex-title').textContent = '📝 ' + (data.title || '填空题');
+  document.getElementById('ex-source').textContent = data.source ? '来源: ' + data.source : '';
+  document.getElementById('ex-empty').style.display = 'none';
+  document.getElementById('ex-footer').style.display = 'flex';
+
+  const container = document.getElementById('ex-questions');
+  container.style.display = 'block';
+  container.innerHTML = '';
+
+  currentQuestions.forEach((q, i) => {
+    // 把 ______ 替换为高亮占位
+    const parts = q.question.split('______');
+    let html = '';
+    parts.forEach((part, pi) => {
+      html += escapeHtml(part);
+      if (pi < parts.length - 1) {
+        html += '<span class="blank-highlight" id="blank-' + i + '">______</span>';
+      }
+    });
+
+    const wrap = document.createElement('div');
+    wrap.className = 'eq-wrap';
+    wrap.id = 'eq-' + i;
+    wrap.innerHTML =
+      '<div class="eq-text"><span class="eq-num">' + (i+1) + '</span>' + html + '</div>' +
+      '<div class="eq-answer-row">' +
+        '<input type="text" id="ans-' + i + '" placeholder="输入你的答案…" onkeydown="if(event.key===\'Enter\') submitExercise()">' +
+        '<span class="result-tag" id="result-' + i + '" style="display:none;"></span>' +
+      '</div>';
+    container.appendChild(wrap);
+  });
+}
+
+// ═══ 提交批改 ═══
+function submitExercise() {
+  let correct = 0;
+  currentQuestions.forEach((q, i) => {
+    const inputEl = document.getElementById('ans-' + i);
+    const resultEl = document.getElementById('result-' + i);
+    const wrapEl = document.getElementById('eq-' + i);
+    const blankEl = document.getElementById('blank-' + i);
+
+    if (!inputEl || !resultEl) return;
+
+    q.userAnswer = inputEl.value.trim();
+
+    // 判题（模糊匹配：去除空格、全半角）
+    const normalize = (s) => s.replace(/\s+/g, '').replace(/[（(]/g, '(').replace(/[）)]/g, ')').toLowerCase();
+    const isCorrect = normalize(q.userAnswer) === normalize(q.answer);
+
+    q.status = isCorrect ? 'correct' : 'wrong';
+
+    // 样式
+    inputEl.disabled = true;
+    wrapEl.classList.remove('correct', 'wrong');
+    wrapEl.classList.add(isCorrect ? 'correct' : 'wrong');
+
+    resultEl.style.display = 'inline-block';
+    resultEl.className = 'result-tag ' + (isCorrect ? 'correct' : 'wrong');
+    resultEl.textContent = isCorrect ? '✓ 正确' : '✗ 错误';
+
+    // 答案行追加正确答案提示
+    const row = inputEl.parentElement;
+    const existing = row.querySelector('.correct-answer');
+    if (!existing) {
+      const hint = document.createElement('span');
+      hint.className = 'correct-answer';
+      hint.textContent = isCorrect ? '' : '正确答案: ' + q.answer;
+      row.appendChild(hint);
+    }
+
+    // 高亮填空
+    if (blankEl) {
+      blankEl.className = isCorrect ? 'blank-highlight blank-filled' : 'blank-highlight blank-wrong';
+      blankEl.textContent = q.userAnswer || '______';
+    }
+
+    if (isCorrect) correct++;
+  });
+
+  document.getElementById('ex-score').textContent = '得分: ' + correct + '/' + currentQuestions.length;
+  document.getElementById('ex-submit').disabled = true;
+  document.getElementById('ex-retry').style.display = 'inline-block';
+}
+
+// ═══ 重置 ═══
+function resetExercise() {
+  if (currentQuestions.length === 0) return;
+  currentQuestions.forEach((q, i) => {
+    q.userAnswer = '';
+    q.status = null;
+    const inputEl = document.getElementById('ans-' + i);
+    const resultEl = document.getElementById('result-' + i);
+    const wrapEl = document.getElementById('eq-' + i);
+    const blankEl = document.getElementById('blank-' + i);
+    if (inputEl) { inputEl.disabled = false; inputEl.value = ''; }
+    if (resultEl) { resultEl.style.display = 'none'; }
+    if (wrapEl) { wrapEl.classList.remove('correct', 'wrong'); }
+    if (blankEl) { blankEl.className = 'blank-highlight'; blankEl.textContent = '______'; }
+    // 删除答案提示
+    if (inputEl) {
+      const hint = inputEl.parentElement.querySelector('.correct-answer');
+      if (hint) hint.remove();
+    }
+  });
+  document.getElementById('ex-score').textContent = '得分: 0/' + currentQuestions.length;
+  document.getElementById('ex-submit').disabled = false;
+  document.getElementById('ex-retry').style.display = 'none';
+}
 </script>
 </body>
 </html>
