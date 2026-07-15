@@ -136,12 +136,28 @@ function connect() {
 }
 connect();
 
+function escapeHtml(str) {
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+function linkify(text) {
+  let html = escapeHtml(text);
+  // 把 /download/xxx.zip 转为可点击的下载按钮
+  html = html.replace(/\/download\/[\w.-]+/g, function(match) {
+    const filename = match.replace('/download/', '');
+    return `<a href="${match}" onclick="(function(e){e.preventDefault();var a=e.target.closest('a');var x=new XMLHttpRequest();x.open('GET',a.href);x.responseType='blob';x.onload=function(){var url=URL.createObjectURL(x.response);var link=document.createElement('a');link.href=url;link.download='${escapeHtml(filename)}';document.body.appendChild(link);link.click();setTimeout(function(){document.body.removeChild(link);URL.revokeObjectURL(url);},1000);};x.send();})(event)" style="display:inline-block;margin:4px 0;padding:6px 14px;background:#1a73e8;color:#fff;border-radius:6px;text-decoration:none;font-size:13px;cursor:pointer;">📥 下载 ${escapeHtml(filename)}</a>`;
+  });
+  return html;
+}
+
 function addMsg(role, text) {
   const div = document.createElement('div');
   div.className = 'msg ' + role;
   const bubble = document.createElement('div');
   bubble.className = 'bubble';
-  bubble.textContent = text;
+  bubble.innerHTML = linkify(text);
   div.appendChild(bubble);
   messages.appendChild(div);
   messages.scrollTop = messages.scrollHeight;

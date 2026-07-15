@@ -5,6 +5,7 @@ FastAPI 后端：将 Agent 接入 Web 页面
 import os
 import sys
 import json
+import uuid
 import threading
 import uvicorn
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
@@ -20,6 +21,22 @@ from langchain.tools import tool
 from langgraph.checkpoint.memory import MemorySaver
 from langchain.agents import create_agent
 from langchain_core.messages import HumanMessage, AIMessage
+
+# ── 下载目录 ─────────────────────────────
+
+DOWNLOAD_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "downloads")
+os.makedirs(DOWNLOAD_DIR, exist_ok=True)
+
+# 启动时清理超过 1 小时的旧 zip 文件
+import time as _time
+try:
+    now = _time.time()
+    for f in os.listdir(DOWNLOAD_DIR):
+        fp = os.path.join(DOWNLOAD_DIR, f)
+        if f.endswith(".zip") and os.path.isfile(fp) and now - os.path.getmtime(fp) > 3600:
+            os.remove(fp)
+except Exception:
+    pass
 
 # ── 工具定义 ─────────────────────────────
 
@@ -43,7 +60,7 @@ def search_docs(query: str) -> str:
 
 @tool
 def pack_docs(query: str) -> str:
-    """搜索匹配的文档并打包为 ZIP 压缩包，返回压缩包路径。"""
+    """搜索匹配的文档并打包为 ZIP 压缩包，返回网页端可直接点击下载的链接。"""
     try:
         from rag_engine import RAGEngine
         repo_dir = os.path.dirname(os.path.abspath(__file__))
@@ -59,13 +76,16 @@ def pack_docs(query: str) -> str:
                 seen.add(r["path"])
                 files.append(r["path"])
         safe = "".join(c if c.isalnum() or c in "-_ " else "_" for c in query)[:20].strip()
-        zip_path = os.path.join(os.path.expanduser("~"), f"{safe or 'docs'}.zip")
+        unique_id = uuid.uuid4().hex[:8]
+        filename = f"{safe or 'docs'}_{unique_id}.zip"
+        zip_path = os.path.join(DOWNLOAD_DIR, filename)
         with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
             for f in files:
                 full = os.path.join(repo_dir, f)
                 if os.path.exists(full):
                     zf.write(full, f)
-        return f"打包完成！共 {len(files)} 个文件\n保存位置: {zip_path}"
+        download_url = f"/download/{filename}"
+        return f"📦 打包完成！共 {len(files)} 个文件\n点击下方链接下载：\n{download_url}"
     except Exception as e:
         return f"打包失败: {e}"
 
@@ -132,6 +152,21 @@ app = FastAPI(title="复习资料助手")
 static_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
 os.makedirs(static_dir, exist_ok=True)
 app.mount("/static", StaticFiles(directory=static_dir), name="static")
+
+
+@app.get("/download/{filename}")
+async def download_file(filename: str):
+    """提供 ZIP 文件下载"""
+    file_path = os.path.join(DOWNLOAD_DIR, filename)
+    if not os.path.exists(file_path):
+        from fastapi.responses import JSONResponse
+        return JSONResponse({"error": "文件不存在或已过期"}, status_code=404)
+    return FileResponse(
+        path=file_path,
+        filename=filename,
+        media_type="application/zip",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 @app.get("/")
 async def root():

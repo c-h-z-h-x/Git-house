@@ -5,6 +5,7 @@
 """
 
 import os
+import uuid
 
 from langchain_openai import ChatOpenAI
 from langchain.tools import tool
@@ -12,6 +13,12 @@ from langgraph.checkpoint.memory import MemorySaver
 from langchain.agents import create_agent
 from langchain_core.messages import HumanMessage, AIMessage
 from config import LLM_CONFIG
+
+
+# ── 下载目录 ─────────────────────────────
+
+DOWNLOAD_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "downloads")
+os.makedirs(DOWNLOAD_DIR, exist_ok=True)
 
 
 # -- 工具定义 -------------------------------
@@ -54,8 +61,6 @@ def pack_docs(query: str) -> str:
             return "没有找到匹配的文档。"
 
         import zipfile
-        import tempfile
-        from pathlib import Path
 
         # 去重得到唯一文件路径
         seen = set()
@@ -65,9 +70,11 @@ def pack_docs(query: str) -> str:
                 seen.add(r["path"])
                 files.append(r["path"])
 
-        # 创建 zip
+        # 创建 zip（保存到统一下载目录）
         safe_name = "".join(c if c.isalnum() or c in "-_ " else "_" for c in query)[:20].strip()
-        zip_path = os.path.join(os.path.expanduser("~"), f"{safe_name or 'docs'}.zip")
+        unique_id = uuid.uuid4().hex[:8]
+        filename = f"{safe_name or 'docs'}_{unique_id}.zip"
+        zip_path = os.path.join(DOWNLOAD_DIR, filename)
 
         with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as zf:
             for f in files:
@@ -75,7 +82,7 @@ def pack_docs(query: str) -> str:
                 if os.path.exists(full):
                     zf.write(full, f)
 
-        return f"打包完成！共 {len(files)} 个文件\n保存位置: {zip_path}"
+        return f"📦 打包完成！共 {len(files)} 个文件\n保存位置: {zip_path}"
     except Exception as e:
         return f"打包失败: {e}"
 

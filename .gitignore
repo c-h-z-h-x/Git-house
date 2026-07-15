@@ -6,3 +6,9 @@ venv/
 .venv/
 
 test_rag*.py
+
+# Server logs
+server_*.log
+
+# Downloaded zip files
+downloads/
