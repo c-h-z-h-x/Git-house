@@ -5,8 +5,8 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# 阿里百炼工作空间
-BAILIAN_BASE_URL = "https://ws-ogjwl5f71op9q2jf.cn-beijing.maas.aliyuncs.com/compatible-mode/v1"
+# 阿里百炼工作空间（从 .env 读取，每个用户不同）
+BAILIAN_BASE_URL = os.getenv("BAILIAN_BASE_URL", "https://dashscope.aliyuncs.com/compatible-mode/v1")
 BAILIAN_MODEL = "qwen-plus"
 
 # 模型配置
