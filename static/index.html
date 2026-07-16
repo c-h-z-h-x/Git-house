@@ -637,7 +637,23 @@ let exIndex=0;
 let exMode='review'; // 'review' | 'grading'
 let answered=[];
 
-function renderExercise(d){
+// Wrap raw LaTeX commands in KaTeX delimiters
+function wrapMath(s){
+  // 1) Display math: \begin{env}...\end{env} → $$...$$
+  s=s.replace(/\\begin\{(\w+)\}([\s\S]*?)\\end\{\1\}/g,(m)=>'$$'+m+'$$');
+  // 2) Backslash commands not already inside $...$: wrap in inline $...$
+  s=s.replace(/(?<!\$)(\\[a-zA-Z]+(?:\{[^}]*\})?)/g,(m)=>'$'+m+'$');
+  // Clean double wrapping
+  s=s.replace(/\$\$(\$[^$]+\$)\$\$/g,'$1');
+  s=s.replace(/\$\$(\$[^$]+\$)\$\$/g,'$1');
+  // Fix cases where empty/trivial inline math was created
+  s=s.replace(/\$\\[a-zA-Z]{1,2}\$/g,(m)=>{
+    const cmd=m.slice(1,-1);
+    if(['\\n','\\t','\\r','\\ ','\\\n'].includes(cmd))return cmd;
+    return m;
+  });
+  return s;
+}
   currentQuestions=(d.questions||[]).map((q,i)=>({id:q.id||i+1,question:q.question,answer:q.answer}));
   answered=[];
   exIndex=0;
@@ -664,7 +680,8 @@ function renderCard(){
   const q=currentQuestions[exIndex];
   const card=document.getElementById('ex-card');
   const total=currentQuestions.length;
-  const parts=q.question.split('______');
+  const processedQuestion=wrapMath(q.question);
+  const parts=processedQuestion.split('______');
   let textHtml='';
   parts.forEach((p,i)=>{
     textHtml+=escapeHtml(p);
@@ -833,7 +850,8 @@ function showResults(){
       : '<svg class="cross" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
     const cls=isCorrect?'correct':'wrong';
     const delay=60*i;
-    const parts=q.question.split('______');
+    const processedQ=wrapMath(q.question);
+    const parts=processedQ.split('______');
     let qShort=parts.join('____');
     if(qShort.length>60)qShort=qShort.slice(0,58)+'…';
     itemsHtml+=
