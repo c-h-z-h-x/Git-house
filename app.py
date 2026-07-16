@@ -208,7 +208,7 @@ threading.Thread(target=_index_worker, daemon=True).start()
 
 # ── FastAPI 应用 ─────────────────────────
 
-app = FastAPI(title="穹途末路")
+app = FastAPI(title="复习资料助手")
 
 static_dir = os.path.join(REPO_DIR, "static")
 os.makedirs(static_dir, exist_ok=True)
