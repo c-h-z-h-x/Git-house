@@ -791,6 +791,7 @@ function toggleAnswer(){
 function switchExerciseMode(mode){
   if(mode===exMode)return;
   exMode=mode;
+  document.getElementById('ex-mode-bar').style.display='flex';
   document.querySelectorAll('.ex-mode-btn').forEach(b=>{
     b.classList.toggle('active',b.dataset.mode===mode);
   });
