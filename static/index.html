@@ -654,6 +654,8 @@ function wrapMath(s){
   });
   return s;
 }
+
+function renderExercise(d){
   currentQuestions=(d.questions||[]).map((q,i)=>({id:q.id||i+1,question:q.question,answer:q.answer}));
   answered=[];
   exIndex=0;
