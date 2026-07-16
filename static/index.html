@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -283,6 +283,152 @@
   }
   .ex-answer-btn:hover{background:var(--sage);color:#fff}
   .ex-answer-btn.revealed{background:var(--sage);color:#fff}
+
+  /* ── Mode Toggle ── */
+  .ex-mode-bar{
+    display:flex;gap:8px;padding:12px 24px;border-bottom:1px solid var(--border);
+    background:color-mix(in oklch,var(--cream) 50%,var(--cream-light));flex-shrink:0;
+  }
+  .ex-mode-btn{
+    display:inline-flex;align-items:center;gap:6px;
+    padding:8px 18px;border-radius:var(--radius-sm);border:1.5px solid var(--border);
+    background:var(--surface);color:var(--text-muted);font-size:13px;font-weight:500;
+    cursor:pointer;transition:all .2s;font-family:inherit;
+  }
+  .ex-mode-btn svg{width:16px;height:16px;opacity:.6;transition:opacity .2s}
+  .ex-mode-btn:hover{border-color:var(--sage);color:var(--sage)}
+  .ex-mode-btn.active{
+    background:color-mix(in oklch,var(--sage) 12%,var(--cream-light));
+    border-color:var(--sage);color:var(--sage);font-weight:600;
+    box-shadow:0 0 0 3px color-mix(in oklch,var(--sage) 10%,transparent);
+  }
+  .ex-mode-btn.active svg{opacity:1}
+  .ex-mode-btn .mode-indicator{width:7px;height:7px;border-radius:50%;display:none}
+  .ex-mode-btn.active .mode-indicator{display:inline-block;background:var(--sage)}
+  .ex-mode-desc{
+    font-size:12px;color:var(--text-muted);margin-left:auto;white-space:nowrap;
+    animation:in .2s ease-out;padding-left:12px;border-left:1px solid var(--border);
+    line-height:1.4;
+  }
+  .ex-mode-desc.hide{display:none}
+  @media(max-width:1000px){.ex-mode-desc{font-size:11px;max-width:200px;white-space:normal}}
+
+  /* ── Grading Input ── */
+  .ex-card .ex-grading-area{margin-top:20px;padding-top:16px;border-top:1px solid var(--border)}
+  .ex-grading-row{display:flex;gap:8px;align-items:center}
+  .ex-grading-row input{
+    flex:1;padding:10px 14px;border:1.5px solid var(--border);border-radius:8px;
+    font-size:15px;outline:none;transition:border .2s,box-shadow .2s;
+    background:var(--surface);color:var(--text);font-family:inherit;
+  }
+  .ex-grading-row input:focus{border-color:var(--sage);box-shadow:0 0 0 3px color-mix(in oklch,var(--sage) 12%,transparent)}
+  .ex-grading-row input:disabled{opacity:.5;background:color-mix(in oklch,var(--cream) 40%,var(--surface))}
+  .ex-grading-row input.correct{border-color:var(--success);background:color-mix(in oklch,var(--success) 6%,var(--surface))}
+  .ex-grading-row input.wrong{border-color:var(--error);background:color-mix(in oklch,var(--error) 6%,var(--surface))}
+  .ex-submit-btn{
+    padding:10px 22px;border:none;border-radius:8px;
+    background:var(--sage);color:#fff;font-size:14px;font-weight:600;
+    cursor:pointer;transition:all .15s;white-space:nowrap;font-family:inherit;
+  }
+  .ex-submit-btn:hover{background:var(--sage-dark);box-shadow:var(--shadow-raise);transform:translateY(-1px)}
+  .ex-submit-btn:active{transform:translateY(0) scale(.97)}
+  .ex-submit-btn:disabled{opacity:.4;cursor:not-allowed;box-shadow:none}
+  .ex-submit-btn.submitted{background:var(--cream-dark);color:var(--text-muted);cursor:default}
+  .ex-submit-btn.submitted:hover{box-shadow:none;transform:none}
+
+  .ex-result-badge{
+    display:inline-flex;align-items:center;gap:5px;
+    margin-top:10px;padding:6px 14px;border-radius:8px;
+    font-size:13px;font-weight:600;animation:in .2s ease-out;
+  }
+  .ex-result-badge svg{width:15px;height:15px}
+  .ex-result-badge.correct{
+    background:color-mix(in oklch,var(--sage) 12%,transparent);
+    color:color-mix(in oklch,var(--sage) 85%,#000);
+  }
+  .ex-result-badge.wrong{
+    background:color-mix(in oklch,var(--error) 10%,transparent);
+    color:var(--error);
+  }
+  .ex-result-badge .correct-ans{
+    color:var(--text-muted);font-weight:400;margin-left:4px;
+  }
+  .ex-result-badge .correct-ans strong{color:var(--sage);font-weight:600}
+
+  /* ── Results Panel ── */
+  .ex-results{display:none;flex:1;overflow-y:auto;padding:24px;}
+  .ex-results.show{display:block;animation:in .3s ease-out}
+  .ex-score-hero{
+    text-align:center;padding:32px 16px 28px;
+    background:color-mix(in oklch,var(--cream-light) 60%,var(--surface));
+    border-radius:var(--radius);border:1px solid var(--border);
+    margin-bottom:20px;box-shadow:var(--shadow-sm);
+  }
+  .ex-score-ring{
+    position:relative;display:inline-flex;align-items:center;justify-content:center;
+    width:120px;height:120px;border-radius:50%;
+    background:conic-gradient(var(--sage) var(--pct,0%), var(--cream-dark) var(--pct,0%));
+    margin-bottom:12px;
+  }
+  .ex-score-ring-inner{
+    width:96px;height:96px;border-radius:50%;
+    background:var(--cream-light);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    box-shadow:inset 0 2px 8px rgba(0,0,0,.04);
+  }
+  .ex-score-ring-inner .score-num{font-size:32px;font-weight:700;color:var(--sage);line-height:1}
+  .ex-score-ring-inner .score-label{font-size:12px;color:var(--text-muted);margin-top:2px}
+  .ex-score-stats{display:flex;justify-content:center;gap:32px;margin-top:8px}
+  .ex-score-stat{text-align:center}
+  .ex-score-stat .num{font-size:22px;font-weight:700}
+  .ex-score-stat .num.correct{color:var(--sage)}
+  .ex-score-stat .num.wrong{color:var(--error)}
+  .ex-score-stat .label{font-size:11px;color:var(--text-muted);margin-top:2px}
+
+  .ex-results-list{margin-bottom:20px}
+  .ex-result-item{
+    display:flex;align-items:flex-start;gap:10px;
+    padding:12px 16px;border-radius:var(--radius-sm);
+    margin-bottom:6px;border:1px solid var(--border);
+    background:var(--cream-light);font-size:14px;line-height:1.5;
+    animation:in .2s ease-out both;
+  }
+  .ex-result-item .r-icon{flex-shrink:0;margin-top:1px}
+  .ex-result-item .r-icon svg{width:18px;height:18px}
+  .ex-result-item .r-icon .check{color:var(--sage)}
+  .ex-result-item .r-icon .cross{color:var(--error)}
+  .ex-result-item .r-body{flex:1;min-width:0}
+  .ex-result-item .r-q{color:var(--text);margin-bottom:2px}
+  .ex-result-item .r-ans{font-size:12px;color:var(--text-muted)}
+  .ex-result-item .r-ans strong{color:var(--sage);font-weight:600}
+  .ex-result-item.wrong{border-left:3px solid var(--error)}
+  .ex-result-item.correct{border-left:3px solid var(--sage)}
+
+  .ex-results-actions{display:flex;gap:10px;justify-content:center;padding-bottom:8px}
+  .ex-results-actions button{
+    padding:10px 28px;border-radius:var(--radius-sm);
+    font-size:14px;font-weight:600;cursor:pointer;transition:all .15s;font-family:inherit;
+  }
+  .ex-results-actions .btn-primary{
+    background:var(--sage);color:#fff;border:none;
+    box-shadow:var(--shadow-sm);
+  }
+  .ex-results-actions .btn-primary:hover{background:var(--sage-dark);box-shadow:var(--shadow-raise);transform:translateY(-1px)}
+  .ex-results-actions .btn-secondary{
+    background:transparent;color:var(--text-secondary);
+    border:1.5px solid var(--border);
+  }
+  .ex-results-actions .btn-secondary:hover{border-color:var(--sage);color:var(--sage)}
+
+  /* ── Footer actions per mode ── */
+  .ex-footer-right{display:flex;gap:8px;align-items:center;margin-left:auto}
+  .ex-view-results-btn{
+    padding:8px 20px;border:none;border-radius:var(--radius-sm);
+    background:var(--sage);color:#fff;font-size:13px;font-weight:600;
+    cursor:pointer;transition:all .15s;font-family:inherit;display:none;
+  }
+  .ex-view-results-btn:hover{background:var(--sage-dark);box-shadow:var(--shadow-raise);transform:translateY(-1px)}
+  .ex-view-results-btn.show{display:inline-flex;animation:in .2s ease-out}
 </style>
 </head>
 <body>
@@ -350,6 +496,19 @@
               <span id="ex-title">填空题</span>
             </h2>
             <div class="src" id="ex-source"></div>
+            <div class="ex-mode-bar" id="ex-mode-bar">
+              <button class="ex-mode-btn active" data-mode="review" onclick="switchExerciseMode('review')">
+                <svg viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8" fill="none"/></svg>
+                <span class="mode-indicator"></span>
+                复习模式
+              </button>
+              <button class="ex-mode-btn" data-mode="grading" onclick="switchExerciseMode('grading')">
+                <svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/><circle cx="18" cy="18" r="3" stroke="currentColor" stroke-width="1.8" fill="none"/></svg>
+                <span class="mode-indicator"></span>
+                批改模式
+              </button>
+              <span class="ex-mode-desc" id="ex-mode-desc">批改模式：根据你的答题情况会指定相应的复习计划</span>
+            </div>
           </div>
           <div class="exercise-body" id="ex-body">
             <div class="exercise-empty" id="ex-empty">
@@ -361,6 +520,7 @@
                 <div class="ex-card" id="ex-card"></div>
               </div>
             </div>
+            <div class="ex-results" id="ex-results"></div>
           </div>
           <div class="exercise-footer" id="ex-footer" style="display:none;">
             <div class="ex-nav">
@@ -372,7 +532,10 @@
                 <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>
               </button>
             </div>
-            <button class="ex-answer-btn" id="ex-answer-btn" onclick="toggleAnswer()">显示答案</button>
+            <div class="ex-footer-right">
+              <button class="ex-view-results-btn" id="ex-view-results-btn" onclick="showResults()">📊 查看结果</button>
+              <button class="ex-answer-btn" id="ex-answer-btn" onclick="toggleAnswer()">显示答案</button>
+            </div>
           </div>
         </div>
       </div>
@@ -468,65 +631,112 @@ function send(){
 input.addEventListener('keydown',e=>{if(e.key==='Enter')send()});
 sendBtn.addEventListener('click',send);
 
-// ═══ Exercise: Card-based with slide nav ═══
+// ═══ Exercise: Card-based with dual-mode (Review / Grading) ═══
 let currentQuestions=[];
 let exIndex=0;
+let exMode='review'; // 'review' | 'grading'
+let answered=[];
 
 function renderExercise(d){
-  currentQuestions=(d.questions||[]).map(q=>({id:q.id,question:q.question,answer:q.answer}));
+  currentQuestions=(d.questions||[]).map((q,i)=>({id:q.id||i+1,question:q.question,answer:q.answer}));
+  answered=[];
   exIndex=0;
   document.getElementById('ex-title').textContent=d.title||'填空题';
   document.getElementById('ex-source').textContent=d.source?'来源: '+d.source:'';
   document.getElementById('ex-empty').style.display='none';
   document.getElementById('ex-questions').style.display='block';
+  document.getElementById('ex-results').classList.remove('show');
   document.getElementById('ex-footer').style.display='flex';
-  document.getElementById('ex-answer-btn').className='ex-answer-btn';
-  document.getElementById('ex-answer-btn').textContent='显示答案';
+  document.getElementById('ex-mode-bar').style.display='flex';
+  document.getElementById('ex-answer-btn').style.display='';
+  document.getElementById('ex-view-results-btn').classList.remove('show');
+  exMode='review';
+  document.querySelectorAll('.ex-mode-btn').forEach(b=>{
+    b.classList.toggle('active',b.dataset.mode==='review');
+  });
+  const desc=document.getElementById('ex-mode-desc');
+  if(desc)desc.classList.add('hide');
   renderCard();
 }
 
-function renderCard(slideDir){
+function renderCard(){
   if(!currentQuestions.length)return;
   const q=currentQuestions[exIndex];
   const card=document.getElementById('ex-card');
   const total=currentQuestions.length;
-
-  // Split on ______ to highlight blanks
   const parts=q.question.split('______');
   let textHtml='';
   parts.forEach((p,i)=>{
     textHtml+=escapeHtml(p);
     if(i<parts.length-1)textHtml+='<span class="blank-highlight">______</span>';
   });
+  const answeredInfo=answered.find(a=>a.idx===exIndex);
 
-  // Build card HTML
-  card.innerHTML=
-    '<div class="ex-card-inner">'+
-      '<div class="eq-text"><span class="eq-num">'+(exIndex+1)+'</span>'+textHtml+'</div>'+
-      '<div class="ex-answer" id="ex-answer-box">'+
-        '<strong>答案：</strong>'+escapeHtml(q.answer)+
-      '</div>'+
-    '</div>';
-
-  // Reset answer visibility
-  document.getElementById('ex-answer-box').classList.remove('show');
-  document.getElementById('ex-answer-btn').className='ex-answer-btn';
-  document.getElementById('ex-answer-btn').textContent='显示答案';
-
-  // Progress
+  if(exMode==='review'){
+    card.innerHTML=
+      '<div class="ex-card-inner">'+
+        '<div class="eq-text"><span class="eq-num">'+(exIndex+1)+'</span>'+textHtml+'</div>'+
+        '<div class="ex-answer" id="ex-answer-box">'+
+          '<strong>答案：</strong>'+escapeHtml(q.answer)+
+        '</div>'+
+      '</div>';
+    document.getElementById('ex-answer-box').classList.remove('show');
+    document.getElementById('ex-answer-btn').className='ex-answer-btn';
+    document.getElementById('ex-answer-btn').textContent='显示答案';
+    document.getElementById('ex-answer-btn').style.display='';
+  } else {
+    const isSubmitted=answeredInfo!==undefined;
+    const inputClass=isSubmitted?(answeredInfo.correct?'correct':'wrong'):'';
+    const submitDisabled=isSubmitted?'disabled':'';
+    const submitText=isSubmitted?'已批阅':'提交';
+    const inputDisabled=isSubmitted?'disabled':'';
+    const inputValue=isSubmitted?escapeHtml(answeredInfo.userAnswer):'';
+    let resultHtml='';
+    if(isSubmitted){
+      if(answeredInfo.correct){
+        resultHtml='<div class="ex-result-badge correct">'+
+          '<svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>'+
+          '✓ 正确！</div>';
+      } else {
+        resultHtml='<div class="ex-result-badge wrong">'+
+          '<svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>'+
+          '✗ 错误，正确答案：<span class="correct-ans"><strong>'+escapeHtml(q.answer)+'</strong></span></div>';
+      }
+    }
+    card.innerHTML=
+      '<div class="ex-card-inner">'+
+        '<div class="eq-text"><span class="eq-num">'+(exIndex+1)+'</span>'+textHtml+'</div>'+
+        '<div class="ex-grading-area">'+
+          '<div class="ex-grading-row">'+
+            '<input type="text" id="ex-grade-input" class="'+inputClass+'" placeholder="输入你的答案…" '+
+              'value="'+inputValue+'" '+inputDisabled+' onkeydown="if(event.key===\"Enter\"&&!this.disabled)submitAnswer()">'+
+            '<button class="ex-submit-btn '+submitText+'" id="ex-submit-btn" '+submitDisabled+' onclick="submitAnswer()">'+submitText+'</button>'+
+          '</div>'+
+          resultHtml+
+        '</div>'+
+      '</div>';
+    document.getElementById('ex-answer-btn').style.display='none';
+    if(!isSubmitted){
+      setTimeout(()=>{
+        const inp=document.getElementById('ex-grade-input');
+        if(inp)inp.focus();
+      },250);
+    }
+  }
   document.getElementById('ex-progress').textContent=(exIndex+1)+' / '+total;
-
-  // Arrow states
   document.getElementById('ex-prev').disabled=(exIndex===0);
   document.getElementById('ex-next').disabled=(exIndex===total-1);
-
-  // KaTeX re-render
+  if(exMode==='grading'){
+    const allDone=currentQuestions.every((_,i)=>answered.some(a=>a.idx===i));
+    document.getElementById('ex-view-results-btn').classList.toggle('show',allDone);
+  }
   if(typeof renderMathInElement==='function'){
     renderMathInElement(card,{delimiters:[{left:'$$',right:'$$',display:true},{left:'$',right:'$',display:false},{left:'\\(',right:'\\)',display:false}]});
   }
 }
 
 function nextQuestion(){
+  if(document.getElementById('ex-results').classList.contains('show'))return;
   if(exIndex>=currentQuestions.length-1)return;
   const card=document.getElementById('ex-card');
   card.classList.add('slide-left');
@@ -538,6 +748,7 @@ function nextQuestion(){
 }
 
 function prevQuestion(){
+  if(document.getElementById('ex-results').classList.contains('show'))return;
   if(exIndex<=0)return;
   const card=document.getElementById('ex-card');
   card.classList.add('slide-right');
@@ -551,11 +762,111 @@ function prevQuestion(){
 function toggleAnswer(){
   const box=document.getElementById('ex-answer-box');
   const btn=document.getElementById('ex-answer-btn');
+  if(!box)return;
   const show=!box.classList.contains('show');
   box.classList.toggle('show',show);
   btn.textContent=show?'隐藏答案':'显示答案';
   btn.classList.toggle('revealed',show);
 }
-</script>
+
+function switchExerciseMode(mode){
+  if(mode===exMode)return;
+  exMode=mode;
+  document.querySelectorAll('.ex-mode-btn').forEach(b=>{
+    b.classList.toggle('active',b.dataset.mode===mode);
+  });
+  const desc=document.getElementById('ex-mode-desc');
+  if(desc)desc.classList.toggle('hide',mode!=='grading');
+  if(mode==='grading'){
+    answered=[];
+    document.getElementById('ex-view-results-btn').classList.remove('show');
+    document.getElementById('ex-results').classList.remove('show');
+    document.getElementById('ex-questions').style.display='block';
+  }
+  if(mode==='review'){
+    document.getElementById('ex-results').classList.remove('show');
+    document.getElementById('ex-questions').style.display='block';
+  }
+  renderCard();
+}
+
+function submitAnswer(){
+  const input=document.getElementById('ex-grade-input');
+  const btn=document.getElementById('ex-submit-btn');
+  if(!input||input.disabled)return;
+  const userAnswer=input.value.trim();
+  if(!userAnswer){
+    input.focus();
+    input.style.borderColor='var(--error)';
+    setTimeout(()=>{input.style.borderColor=''},600);
+    return;
+  }
+  const q=currentQuestions[exIndex];
+  const correct=normalizeAnswer(userAnswer)===normalizeAnswer(q.answer);
+  answered.push({idx:exIndex,userAnswer,correct});
+  renderCard();
+}
+
+function normalizeAnswer(s){
+  return s.replace(/\s+/g,'').toLowerCase()
+          .replace(/[，。,．、！？：；（）【】《》""''「」『』]/g,'')
+          .replace(/[\u00a0\u3000]/g,'');
+}
+
+function showResults(){
+  if(!currentQuestions.length)return;
+  const total=currentQuestions.length;
+  const correctCount=answered.filter(a=>a.correct).length;
+  const pct=Math.round((correctCount/total)*100);
+  document.getElementById('ex-questions').style.display='none';
+  document.getElementById('ex-results').classList.add('show');
+  document.getElementById('ex-answer-btn').style.display='none';
+  document.getElementById('ex-view-results-btn').classList.remove('show');
+  document.getElementById('ex-mode-bar').style.display='none';
+  const resultsEl=document.getElementById('ex-results');
+  let itemsHtml='';
+  currentQuestions.forEach((q,i)=>{
+    const a=answered.find(a=>a.idx===i);
+    const isCorrect=a?a.correct:false;
+    const icon=isCorrect
+      ? '<svg class="check" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>'
+      : '<svg class="cross" viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    const cls=isCorrect?'correct':'wrong';
+    const delay=60*i;
+    const parts=q.question.split('______');
+    let qShort=parts.join('____');
+    if(qShort.length>60)qShort=qShort.slice(0,58)+'…';
+    itemsHtml+=
+      '<div class="ex-result-item '+cls+'" style="animation-delay:'+delay+'ms">'+
+        '<div class="r-icon">'+icon+'</div>'+
+        '<div class="r-body">'+
+          '<div class="r-q">'+(i+1)+'. '+escapeHtml(qShort)+'</div>'+
+          '<div class="r-ans">'+
+            (a?'你的答案：'+escapeHtml(a.userAnswer)+' · ':'')+
+            '<strong>正确答案：'+escapeHtml(q.answer)+'</strong>'+
+          '</div>'+
+        '</div>'+
+      '</div>';
+  });
+  resultsEl.innerHTML=
+    '<div class="ex-score-hero">'+
+      '<div class="ex-score-ring" style="--pct:'+pct+'%">'+
+        '<div class="ex-score-ring-inner">'+
+          '<div class="score-num">'+pct+'%</div>'+
+          '<div class="score-label">正确率</div>'+
+        '</div>'+
+      '</div>'+
+      '<div class="ex-score-stats">'+
+        '<div class="ex-score-stat"><div class="num correct">'+correctCount+'</div><div class="label">正确</div></div>'+
+        '<div class="ex-score-stat"><div class="num wrong">'+(total-correctCount)+'</div><div class="label">错误</div></div>'+
+        '<div class="ex-score-stat"><div class="num" style="color:var(--text-secondary)">'+total+'</div><div class="label">总计</div></div>'+
+      '</div>'+
+    '</div>'+
+    '<div class="ex-results-list">'+itemsHtml+'</div>'+
+    '<div class="ex-results-actions">'+
+      '<button class="btn-primary" onclick="switchExerciseMode(\'review\')">📖 复习模式</button>'+
+      '<button class="btn-secondary" onclick="switchExerciseMode(\'grading\')">🔄 重做批改</button>'+
+    '</div>';
+}</script>
 </body>
 </html>
